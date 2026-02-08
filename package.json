@@ -1,0 +1,55 @@
+{
+  "name": "react-scroll-sequence",
+  "version": "0.1.0",
+  "description": "Production-ready scroll-driven image sequence rendering component for React",
+  "license": "MIT",
+  "author": "Your Name",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/react-scroll-sequence.git"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "module": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "react": "^18.3.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "react",
+    "scroll",
+    "sequence",
+    "animation",
+    "canvas",
+    "image-sequence",
+    "scroll-driven"
+  ],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yourusername/react-scroll-sequence/issues"
+  },
+  "homepage": "https://github.com/yourusername/react-scroll-sequence#readme"
+}
