@@ -1,5 +1,5 @@
 /**
- * Public type definitions for react-scroll-sequence
+ * Public type definitions for react-scroll-media
  */
 
 export interface ScrollSequenceProps {

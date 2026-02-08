@@ -1,5 +1,5 @@
 /**
- * react-scroll-sequence
+ * react-scroll-media
  * Production-ready scroll-driven image sequence rendering component
  */
 

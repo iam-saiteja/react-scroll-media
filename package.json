@@ -1,12 +1,12 @@
 {
-  "name": "react-scroll-sequence",
+  "name": "react-scroll-media",
   "version": "0.1.0",
   "description": "Production-ready scroll-driven image sequence rendering component for React",
   "license": "MIT",
-  "author": "Your Name",
+  "author": "Thanniru Sai Teja",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/react-scroll-sequence.git"
+    "url": "https://github.com/iam-saiteja/react-scroll-media.git"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -49,7 +49,7 @@
   ],
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/yourusername/react-scroll-sequence/issues"
+    "url": "https://github.com/iam-saiteja/react-scroll-media/issues"
   },
-  "homepage": "https://github.com/yourusername/react-scroll-sequence#readme"
+  "homepage": "https://github.com/iam-saiteja/react-scroll-media#readme"
 }
