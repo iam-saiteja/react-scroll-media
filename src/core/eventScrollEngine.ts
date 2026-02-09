@@ -95,11 +95,25 @@ export class EventScrollEngine {
    * Internal wheel handler.
    */
   private onWheel(e: WheelEvent): void {
-    // Only prevent default if we're active
+    // Only handle if active
     if (!this.isActive) return;
 
+    const { deltaY } = e;
+
+    // Boundary Check:
+    // 1. Scrolling UP (deltaY < 0) and already at start (currentScroll <= 0) -> Release lock
+    if (deltaY < 0 && this.currentScroll <= 0) {
+       return; 
+    }
+
+    // 2. Scrolling DOWN (deltaY > 0) and already at end (currentScroll >= totalScroll) -> Release lock
+    if (deltaY > 0 && this.currentScroll >= this.totalScroll) {
+       return;
+    }
+
+    // Otherwise, trap the scroll
     e.preventDefault();
-    this.currentScroll += e.deltaY;
+    this.currentScroll += deltaY;
     this.currentScroll = clamp(this.currentScroll, 0, this.totalScroll);
     this.emit();
   }
@@ -118,16 +132,27 @@ export class EventScrollEngine {
    * Internal touch move handler.
    */
   private onTouchMove(e: TouchEvent): void {
-    // Only prevent default if we're active
+    // Only handle if active
     if (!this.isActive) return;
 
     if (e.touches.length > 0) {
-      e.preventDefault(); // Prevent page scroll
       const touchY = e.touches[0].clientY;
       const deltaY = this.touchStartY - touchY; // Drag up = positive scroll (content moves up, we scroll down)
       
-      this.touchStartY = touchY; // Update for next move relative to previous position
+      this.touchStartY = touchY; // Update for next move
 
+      // Boundary Check (same as wheel):
+      // 1. Scrolling UP (deltaY < 0) and at start
+      if (deltaY < 0 && this.currentScroll <= 0) {
+        return;
+      }
+
+      // 2. Scrolling DOWN (deltaY > 0) and at end
+      if (deltaY > 0 && this.currentScroll >= this.totalScroll) {
+        return;
+      }
+
+      e.preventDefault(); // Prevent page scroll
       this.currentScroll += deltaY;
       this.currentScroll = clamp(this.currentScroll, 0, this.totalScroll);
       this.emit();

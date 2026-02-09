@@ -15,12 +15,20 @@ export class ScrollEngine {
   /**
    * Create a new ScrollEngine instance.
    * @param callback - Function called with progress (0-1) on each frame
-   * @param scrollElement - Optional element to track scroll on. If null, tracks window scroll.
+   * @param scrollTarget - Element that IS SCROLLED (e.g., overflow container). If null, tracks window.
+   * @param triggerElement - Element to track progress RELATIVE TO (e.g., the sticky container).
    */
-  constructor(callback: ScrollEngineCallback, scrollElement: Element | null = null) {
+  constructor(
+    callback: ScrollEngineCallback, 
+    scrollTarget: Element | null = null,
+    triggerElement: Element | null = null
+  ) {
     this.callback = callback;
-    this.scrollElement = scrollElement;
+    this.scrollElement = scrollTarget;
+    this.triggerElement = triggerElement;
   }
+
+  private triggerElement: Element | null;
 
   /**
    * Start the scroll tracking loop.
@@ -50,13 +58,27 @@ export class ScrollEngine {
 
     let progress = 0;
 
-    if (this.scrollElement) {
-      // Element-based scrolling for fullscreen mode
+    if (this.triggerElement) {
+       // RELATIVE TRACKING: Progress based on element's position in viewport
+       const rect = this.triggerElement.getBoundingClientRect();
+       const visibleHeight = window.innerHeight;
+       const scrollDist = rect.height - visibleHeight;
+
+       if (scrollDist > 0) {
+         // Progress = 0 when top aligns with viewport top (rect.top = 0)
+         // Progress = 1 when bottom aligns with viewport bottom (rect.top = -scrollDist)
+         // We invert rect.top because scrolling down makes it negative
+         progress = -rect.top / scrollDist;
+       } else {
+         progress = 1; // Content shorter than viewport, show end? or 0? 1 usually safe.
+       }
+    } else if (this.scrollElement) {
+      // Element-based scrolling for fullscreen mode (overflow container)
       const scrollTop = this.scrollElement.scrollTop;
       const scrollHeight = this.scrollElement.scrollHeight - this.scrollElement.clientHeight;
       progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
     } else {
-      // Window-based scrolling for regular mode
+      // Window-based scrolling for regular mode (global page progress)
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
       progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
@@ -67,7 +89,7 @@ export class ScrollEngine {
     // Schedule next frame
     this.rafId = requestAnimationFrame(this.tick);
   };
-
+    
   /**
    * Clean up resources.
    */

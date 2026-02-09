@@ -86,9 +86,11 @@ export function useScrollSequence({
             container
           );
         } else {
+          // Pass container as the 'triggerElement' for relative progress calculation
           currentEngine = new ScrollEngine(
             (p) => currentController?.update(clamp(p)),
-            scrollTarget
+            scrollTarget,
+            container // triggerElement
           );
         }
         engineRef.current = currentEngine;
