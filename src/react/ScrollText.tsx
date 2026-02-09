@@ -3,16 +3,26 @@ import { useScrollTimeline } from './useScrollTimeline';
 
 export interface ScrollTextProps {
   children: React.ReactNode;
-  /** Progress start (0-1) where animation begins */
+  /** Progress start (0-1) where ENTRANCE animation begins */
   start?: number;
-  /** Progress end (0-1) where animation ends */
+  /** Progress end (0-1) where ENTRANCE animation ends */
   end?: number;
+  
+  /** Progress start (0-1) where EXIT animation begins. If omitted, element stays visible. */
+  exitStart?: number;
+  /** Progress end (0-1) where EXIT animation ends */
+  exitEnd?: number;
+
   /** Initial opacity */
   initialOpacity?: number;
-  /** Target opacity */
+  /** Target opacity (when entered) */
   targetOpacity?: number;
+  /** Final opacity (after exit) */
+  finalOpacity?: number;
+
   /** Y-axis translation range in pixels (e.g., 50 means move down 50px) */
   translateY?: number;
+  
   style?: React.CSSProperties;
   className?: string;
 }
@@ -20,9 +30,12 @@ export interface ScrollTextProps {
 export function ScrollText({
   children,
   start = 0,
-  end = 1,
+  end = 0.2,
+  exitStart,
+  exitEnd,
   initialOpacity = 0,
   targetOpacity = 1,
+  finalOpacity = 0,
   translateY = 50,
   style,
   className,
@@ -35,23 +48,47 @@ export function ScrollText({
     const unsubscribe = subscribe((globalProgress) => {
       if (!ref.current) return;
 
-      // 1. Calculate local progress within [start, end]
-      let localProgress = 0;
-      if (globalProgress <= start) localProgress = 0;
-      else if (globalProgress >= end) localProgress = 1;
-      else localProgress = (globalProgress - start) / (end - start);
+      let opacity = initialOpacity;
+      let currentY = translateY;
 
-      // 2. Interpolate
-      const opacity = initialOpacity + (targetOpacity - initialOpacity) * localProgress;
-      const currentY = translateY * (1 - localProgress); // e.g. start at 50, end at 0
+      // 1. Entrance Phase
+      if (globalProgress < start) {
+         opacity = initialOpacity;
+         currentY = translateY;
+      } else if (globalProgress >= start && globalProgress <= end) {
+         const local = (globalProgress - start) / (end - start);
+         opacity = initialOpacity + (targetOpacity - initialOpacity) * local;
+         currentY = translateY * (1 - local);
+      } 
+      // 2. Hold Phase
+      else if (!exitStart || globalProgress < exitStart) {
+         opacity = targetOpacity;
+         currentY = 0;
+      }
+      // 3. Exit Phase
+      else if (exitStart && exitEnd && globalProgress >= exitStart && globalProgress <= exitEnd) {
+         const local = (globalProgress - exitStart) / (exitEnd - exitStart);
+         opacity = targetOpacity + (finalOpacity - targetOpacity) * local;
+         // Optional: move up on exit? Or just stay? 
+         // Let's move UP by translateY (negative) for symmetry, or 0? 
+         // User didn't specify, but "going out" usually implies movement.
+         // Let's implement symmetry: Moves from translateY -> 0 during enter.
+         // Moves from 0 -> -translateY during exit?
+         currentY = -translateY * local; 
+      }
+      // 4. Final Phase
+      else {
+         opacity = finalOpacity;
+         currentY = -translateY;
+      }
 
-      // 3. Apply styles directly
+      // Apply styles
       ref.current.style.opacity = opacity.toFixed(3);
       ref.current.style.transform = `translateY(${currentY}px)`;
     });
 
     return unsubscribe;
-  }, [subscribe, start, end, initialOpacity, targetOpacity, translateY]);
+  }, [subscribe, start, end, exitStart, exitEnd, initialOpacity, targetOpacity, finalOpacity, translateY]);
 
   return (
     <div 

@@ -9,6 +9,7 @@ export { ScrollSequence } from './react/ScrollSequence';
 export { useScrollSequence } from './react/useScrollSequence';
 export { ScrollTimelineProvider } from './react/ScrollTimelineProvider';
 export { ScrollText } from './react/ScrollText';
+export { ScrollWordReveal } from './react/ScrollWordReveal';
 export { useScrollTimeline } from './react/useScrollTimeline';
 
 // Types
