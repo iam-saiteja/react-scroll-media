@@ -29,10 +29,14 @@ export const ScrollSequence = React.forwardRef<
       source,
       scrollLength = '300vh',
       className = '',
+      debug = false,
     } = props;
+
+    const debugRef = React.useRef<HTMLDivElement>(null);
 
     const { containerRef, canvasRef, isLoaded } = useScrollSequence({
       source,
+      debugRef,
     });
 
     const containerStyle: React.CSSProperties = {
@@ -57,6 +61,21 @@ export const ScrollSequence = React.forwardRef<
       opacity: isLoaded ? 1 : 0,
       transition: 'opacity 0.2s ease-in',
     };
+    
+    const debugStyle: React.CSSProperties = {
+      position: 'absolute',
+      top: '10px',
+      left: '10px',
+      background: 'rgba(0, 0, 0, 0.7)',
+      color: '#00ff00',
+      padding: '8px',
+      borderRadius: '4px',
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      pointerEvents: 'none',
+      whiteSpace: 'pre-wrap',
+      zIndex: 9999,
+    };
 
     return (
       <div
@@ -66,6 +85,7 @@ export const ScrollSequence = React.forwardRef<
       >
         <div style={stickyWrapperStyle}>
           <canvas ref={canvasRef} style={canvasStyle} />
+          {debug && <div ref={debugRef} style={debugStyle}>Waiting for scroll...</div>}
         </div>
       </div>
     );

@@ -14,6 +14,9 @@ export interface ScrollSequenceProps {
    */
   source: SequenceSource;
 
+  /** If true, shows a debug overlay with progress and frame info. */
+  debug?: boolean;
+
   /** CSS height for the scroll container. Defines the total scroll distance. */
   scrollLength?: string;
 

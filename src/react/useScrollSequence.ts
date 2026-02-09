@@ -7,10 +7,12 @@ import { clamp } from '../core/clamp';
 
 interface UseScrollSequenceParams {
   source: ScrollSequenceProps['source'];
+  debugRef?: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 export function useScrollSequence({
   source,
+  debugRef,
 }: UseScrollSequenceParams) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,18 +49,10 @@ export function useScrollSequence({
 
         // 2. Setup Dimensions
         const updateCanvasSize = () => {
-          // Canvas is always 100vh height and 100% width of the container
-          // But technically it's inside the sticky wrapper which is 100vh
           const rect = container.getBoundingClientRect();
-          // We want the CANVAS resolution to match visualization
-          // Since it's sticky 100vh, we can just use window dimensions or the wrapper dimensions if we had ref
-          // But we only have containerRef (the outer relative one).
-          // Actually, we can assume the canvas fills the viewport width/height relative to the container width ?
-          // The container width is valid. The container height is huge (scrollLength).
-          // The canvas visual height is viewport height.
-          
+          // Canvas matches container width and viewport height (sticky)
           canvas.width = rect.width;
-          canvas.height = window.innerHeight; // Always 100vh visual
+          canvas.height = window.innerHeight; 
           currentController?.setCanvasSize(rect.width, window.innerHeight);
         };
 
@@ -71,7 +65,16 @@ export function useScrollSequence({
 
         // 4. Initialize Engine
         currentEngine = new ScrollEngine(
-          (p) => currentController?.update(clamp(p)),
+          (p) => {
+             const clamped = clamp(p);
+             currentController?.update(clamped);
+
+             // Update Debug Overlay (Direct DOM manipulation for perf)
+             if (debugRef?.current) {
+                const frameIndex = Math.floor(clamped * (sequence.frames.length - 1));
+                debugRef.current.innerText = `Progress: ${clamped.toFixed(2)}\nFrame: ${frameIndex + 1} / ${sequence.frames.length}`;
+             }
+          },
           container
         );
         engineRef.current = currentEngine;
