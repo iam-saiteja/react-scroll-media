@@ -1,27 +1,20 @@
 import { useRef, useEffect, useState } from 'react';
 import type { ScrollSequenceProps } from '../types';
 import { ScrollEngine } from '../core/scrollEngine';
-import { EventScrollEngine } from '../core/eventScrollEngine';
 import { ImageController } from '../controllers/imageController';
 import { resolveSequence } from '../sequence/sequenceResolver';
 import { clamp } from '../core/clamp';
 
 interface UseScrollSequenceParams {
   source: ScrollSequenceProps['source'];
-  scrollLength?: string;
-  fullscreen?: boolean;
-  lockScroll?: boolean;
 }
 
 export function useScrollSequence({
   source,
-  scrollLength = '200vh',
-  fullscreen = true,
-  lockScroll = false,
 }: UseScrollSequenceParams) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<ScrollEngine | EventScrollEngine | null>(null);
+  const engineRef = useRef<ScrollEngine | null>(null);
   const controllerRef = useRef<ImageController | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
@@ -30,7 +23,7 @@ export function useScrollSequence({
 
   useEffect(() => {
     let active = true;
-    let currentEngine: ScrollEngine | EventScrollEngine | null = null;
+    let currentEngine: ScrollEngine | null = null;
     let currentController: ImageController | null = null;
     let currentObserver: ResizeObserver | null = null;
 
@@ -54,16 +47,19 @@ export function useScrollSequence({
 
         // 2. Setup Dimensions
         const updateCanvasSize = () => {
+          // Canvas is always 100vh height and 100% width of the container
+          // But technically it's inside the sticky wrapper which is 100vh
           const rect = container.getBoundingClientRect();
-          canvas.width = rect.width;
-          canvas.height = rect.height;
-          currentController?.setCanvasSize(rect.width, rect.height);
+          // We want the CANVAS resolution to match visualization
+          // Since it's sticky 100vh, we can just use window dimensions or the wrapper dimensions if we had ref
+          // But we only have containerRef (the outer relative one).
+          // Actually, we can assume the canvas fills the viewport width/height relative to the container width ?
+          // The container width is valid. The container height is huge (scrollLength).
+          // The canvas visual height is viewport height.
           
-          // Update virtual scroll calculation on resize
-          if (lockScroll && currentEngine instanceof EventScrollEngine) {
-             const vScroll = calculateVirtualScroll(scrollLength);
-             currentEngine.updateTotalScroll(vScroll);
-          }
+          canvas.width = rect.width;
+          canvas.height = window.innerHeight; // Always 100vh visual
+          currentController?.setCanvasSize(rect.width, window.innerHeight);
         };
 
         // 3. Initialize Controller
@@ -74,25 +70,10 @@ export function useScrollSequence({
         controllerRef.current = currentController;
 
         // 4. Initialize Engine
-        const scrollTarget = (fullscreen && !lockScroll)
-          ? container.querySelector('[data-scroll-area]') as Element
-          : null;
-
-        if (lockScroll) {
-          const vScroll = calculateVirtualScroll(scrollLength);
-          currentEngine = new EventScrollEngine(
-            (p) => currentController?.update(clamp(p)),
-            vScroll,
-            container
-          );
-        } else {
-          // Pass container as the 'triggerElement' for relative progress calculation
-          currentEngine = new ScrollEngine(
-            (p) => currentController?.update(clamp(p)),
-            scrollTarget,
-            container // triggerElement
-          );
-        }
+        currentEngine = new ScrollEngine(
+          (p) => currentController?.update(clamp(p)),
+          container
+        );
         engineRef.current = currentEngine;
 
         // 5. Start & Observe
@@ -124,7 +105,7 @@ export function useScrollSequence({
       controllerRef.current = null;
       resizeObserverRef.current = null;
     };
-  }, [source, scrollLength, fullscreen, lockScroll]);
+  }, [source]);
 
   return {
     containerRef,
@@ -132,14 +113,4 @@ export function useScrollSequence({
     isLoaded,
     error
   };
-}
-
-function calculateVirtualScroll(scrollLength: string): number {
-  if (scrollLength.endsWith('vh')) {
-    return (parseFloat(scrollLength) / 100) * window.innerHeight;
-  }
-  if (scrollLength.endsWith('px')) {
-    return parseFloat(scrollLength);
-  }
-  return parseFloat(scrollLength) || window.innerHeight * 2;
 }

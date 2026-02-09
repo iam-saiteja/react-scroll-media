@@ -14,23 +14,11 @@ export interface ScrollSequenceProps {
    */
   source: SequenceSource;
 
-  /** CSS height for the scroll container. Only used when fullscreen is false. */
+  /** CSS height for the scroll container. Defines the total scroll distance. */
   scrollLength?: string;
-
-  /** If true, canvas sticks to viewport during scroll. */
-  pin?: boolean;
 
   /** CSS class name for the container div. */
   className?: string;
-
-  /** If true, blocks page scroll and only allows scroll within component (default: true). */
-  fullscreen?: boolean;
-
-  /** 
-   * If true, prevents default scroll behavior and drives sequence via scroll events directly. 
-   * The page scrollbar will not move. 
-   */
-  lockScroll?: boolean;
 }
 
 export interface ResolvedSequence {

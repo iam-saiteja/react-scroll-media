@@ -27,43 +27,33 @@ export const ScrollSequence = React.forwardRef<
   ) => {
     const {
       source,
-      scrollLength = '200vh',
-      pin = true,
+      scrollLength = '300vh',
       className = '',
-      fullscreen = true,
-      lockScroll = false,
     } = props;
 
     const { containerRef, canvasRef, isLoaded } = useScrollSequence({
       source,
-      scrollLength,
-      fullscreen,
-      lockScroll,
     });
 
     const containerStyle: React.CSSProperties = {
-      height: fullscreen ? '100vh' : scrollLength,
+      height: scrollLength,
       position: 'relative',
-      overflow: fullscreen ? 'hidden' : 'auto',
+      width: '100%',
     };
 
-    const scrollAreaStyle: React.CSSProperties = fullscreen ? {
-      height: scrollLength,
-      overflow: 'auto',
-      position: 'absolute',
+    const stickyWrapperStyle: React.CSSProperties = {
+      position: 'sticky',
       top: 0,
-      left: 0,
+      height: '100vh',
       width: '100%',
-    } : {};
+      overflow: 'hidden',
+    };
 
     const canvasStyle: React.CSSProperties = {
       display: 'block',
       width: '100%',
       height: '100%',
-      position: fullscreen ? 'absolute' : pin ? 'sticky' : 'relative',
-      top: fullscreen ? 0 : pin ? 0 : undefined,
-      left: fullscreen ? 0 : undefined,
-      pointerEvents: lockScroll ? 'auto' : 'none',
+      objectFit: 'cover',
       opacity: isLoaded ? 1 : 0,
       transition: 'opacity 0.2s ease-in',
     };
@@ -74,21 +64,9 @@ export const ScrollSequence = React.forwardRef<
         className={className}
         style={containerStyle}
       >
-        {fullscreen ? (
-          <>
-            {!lockScroll && (
-              <div
-                data-scroll-area
-                style={scrollAreaStyle}
-              >
-                <div style={{ height: '100%' }} />
-              </div>
-            )}
-            <canvas ref={canvasRef} style={canvasStyle} />
-          </>
-        ) : (
+        <div style={stickyWrapperStyle}>
           <canvas ref={canvasRef} style={canvasStyle} />
-        )}
+        </div>
       </div>
     );
   }

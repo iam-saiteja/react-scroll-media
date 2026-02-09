@@ -10,25 +10,20 @@ export class ScrollEngine {
   private callback: ScrollEngineCallback;
   private rafId: number | null = null;
   private isActive = false;
-  private scrollElement: Element | null;
+  private container: Element;
 
   /**
    * Create a new ScrollEngine instance.
    * @param callback - Function called with progress (0-1) on each frame
-   * @param scrollTarget - Element that IS SCROLLED (e.g., overflow container). If null, tracks window.
-   * @param triggerElement - Element to track progress RELATIVE TO (e.g., the sticky container).
+   * @param container - The container element to track (the one with height: scrollLength)
    */
   constructor(
     callback: ScrollEngineCallback, 
-    scrollTarget: Element | null = null,
-    triggerElement: Element | null = null
+    container: Element
   ) {
     this.callback = callback;
-    this.scrollElement = scrollTarget;
-    this.triggerElement = triggerElement;
+    this.container = container;
   }
-
-  private triggerElement: Element | null;
 
   /**
    * Start the scroll tracking loop.
@@ -51,37 +46,31 @@ export class ScrollEngine {
   }
 
   /**
-   * Main animation loop. Calculates scroll progress and invokes callback.
+   * Main animation loop. Calculates scroll progress based on container position.
    */
   private tick = (): void => {
     if (!this.isActive) return;
 
+    const rect = this.container.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // Total distance the container can "scroll" while the sticky element is pinned
+    // is (containerHeight - viewportHeight).
+    // The sticky element is pinned for this duration.
+    const scrollDist = rect.height - viewportHeight;
+
     let progress = 0;
 
-    if (this.triggerElement) {
-       // RELATIVE TRACKING: Progress based on element's position in viewport
-       const rect = this.triggerElement.getBoundingClientRect();
-       const visibleHeight = window.innerHeight;
-       const scrollDist = rect.height - visibleHeight;
-
-       if (scrollDist > 0) {
-         // Progress = 0 when top aligns with viewport top (rect.top = 0)
-         // Progress = 1 when bottom aligns with viewport bottom (rect.top = -scrollDist)
-         // We invert rect.top because scrolling down makes it negative
-         progress = -rect.top / scrollDist;
-       } else {
-         progress = 1; // Content shorter than viewport, show end? or 0? 1 usually safe.
-       }
-    } else if (this.scrollElement) {
-      // Element-based scrolling for fullscreen mode (overflow container)
-      const scrollTop = this.scrollElement.scrollTop;
-      const scrollHeight = this.scrollElement.scrollHeight - this.scrollElement.clientHeight;
-      progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+    if (scrollDist > 0) {
+      // rect.top is 0 when container starts entering viewport (top align)
+      // As we scroll down, rect.top becomes negative.
+      // Progress = 0 when rect.top = 0
+      // Progress = 1 when rect.top = -scrollDist
+      progress = -rect.top / scrollDist;
     } else {
-      // Window-based scrolling for regular mode (global page progress)
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+      // Container fits or is smaller than viewport, always show end or start?
+      // If height <= 100vh, there's no scrollable distance. Default to 1 (show full).
+      progress = 1;
     }
 
     this.callback(progress);
