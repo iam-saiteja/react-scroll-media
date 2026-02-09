@@ -10,6 +10,7 @@ interface InnerSequenceProps {
     lazyBuffer?: number;
     accessibilityLabel?: string;
     fallback?: React.ReactNode;
+    onError?: (error: Error) => void;
 }
 
 const InnerSequence: React.FC<InnerSequenceProps> = ({ 
@@ -18,14 +19,16 @@ const InnerSequence: React.FC<InnerSequenceProps> = ({
     memoryStrategy,
     lazyBuffer,
     accessibilityLabel = "Scroll sequence",
-    fallback 
+    fallback,
+    onError
 }) => {
     const debugRef = useRef<HTMLDivElement>(null);
     const { canvasRef, isLoaded } = useScrollSequence({
       source,
       debugRef,
       memoryStrategy,
-      lazyBuffer
+      lazyBuffer,
+      onError
     });
     
     // Fallback logic could be handled here or by parent.
@@ -91,21 +94,37 @@ export const ScrollSequence = React.forwardRef<HTMLDivElement, ScrollSequencePro
       lazyBuffer = 10,
       fallback,
       accessibilityLabel,
+      onError,
     } = props;
 
-    // ScrollSequence now acts as the convenient "Bundle"
+    // Check for reduced motion
+    const prefersReducedMotion = React.useMemo(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        return false;
+    }, []);
+
+    // Use ScrollSequence now acts as the convenient "Bundle"
     // It provides the Timeline context and renders the Canvas consumer.
     return (
       <div ref={ref} className={className} style={{ width: '100%' }}>
           <ScrollTimelineProvider scrollLength={scrollLength}>
-             <InnerSequence 
-                source={source} 
-                debug={debug} 
-                memoryStrategy={memoryStrategy}
-                lazyBuffer={lazyBuffer} 
-                fallback={fallback}
-                accessibilityLabel={accessibilityLabel}
-             />
+             {prefersReducedMotion && fallback ? (
+                 <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%' }}>
+                    {fallback}
+                 </div>
+             ) : (
+                 <InnerSequence 
+                    source={source} 
+                    debug={debug} 
+                    memoryStrategy={memoryStrategy}
+                    lazyBuffer={lazyBuffer} 
+                    fallback={fallback}
+                    accessibilityLabel={accessibilityLabel}
+                    onError={onError}
+                 />
+             )}
              {props.children}
           </ScrollTimelineProvider>
       </div>

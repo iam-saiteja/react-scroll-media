@@ -44,6 +44,9 @@ export interface ScrollSequenceProps {
 
   /** Accessibility label for the canvas (role="img"). Defaults to "Scroll sequence". */
   accessibilityLabel?: string;
+
+  /** Callback fired when an error occurs (e.g. image load failure). */
+  onError?: (error: Error) => void;
 }
 
 export interface ResolvedSequence {

@@ -1,15 +1,40 @@
+import { ScrollLoopManager } from './loopManager';
+import { SCROLL_THRESHOLD } from '../constants';
+
 export type TimelineCallback = (progress: number) => void;
 
 export class ScrollTimeline {
   private container: Element;
   private subscribers = new Set<TimelineCallback>();
-  private rafId: number | null = null;
-  private isActive = false;
   private currentProgress = 0;
+  
+  // Caching for performance
+  private cachedRect: DOMRect | null = null;
+  private cachedScrollParent: Element | Window | null = null;
+  private cachedScrollParentRect: DOMRect | null = null;
+  private cachedViewportHeight = 0;
+  private cachedOffsetTop = 0;
+  private isLayoutDirty = true;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(container: Element) {
     this.container = container;
+    
+    if (typeof window !== 'undefined') {
+      // Invalidate cache on resize
+      this.resizeObserver = new ResizeObserver(() => {
+        this.isLayoutDirty = true;
+      });
+      this.resizeObserver.observe(this.container);
+      
+      // Also listen to global resize
+      window.addEventListener('resize', this.onWindowResize);
+    }
   }
+
+  private onWindowResize = () => {
+    this.isLayoutDirty = true;
+  };
 
   /**
    * Subscribe to progress updates.
@@ -17,65 +42,55 @@ export class ScrollTimeline {
    */
   subscribe(callback: TimelineCallback): () => void {
     this.subscribers.add(callback);
-    // Immediately call with current progress? No, wait for next tick or manually call if needed.
-    // Actually, calling immediately is safer for initialization.
+    
+    // Immediately call with current progress for initialization
     try {
         callback(this.currentProgress);
     } catch (e) {
-        console.error("ScrollTimeline: Error in subscriber", e);
+        // Silent
+    }
+
+    // Register with unique LoopManager if we have subscribers
+    if (this.subscribers.size === 1) {
+      ScrollLoopManager.getInstance().register(this.tick);
     }
     
     return () => {
       this.subscribers.delete(callback);
+      if (this.subscribers.size === 0) {
+        ScrollLoopManager.getInstance().unregister(this.tick);
+      }
     };
   }
 
   unsubscribe(callback: TimelineCallback): void {
     this.subscribers.delete(callback);
+    if (this.subscribers.size === 0) {
+      ScrollLoopManager.getInstance().unregister(this.tick);
+    }
   }
 
   /**
-   * Start the loop
+   * Start is now handled by LoopManager via subscriptions
+   * Deprecated but kept for API stability if needed.
    */
   start(): void {
-    if (this.isActive) return;
-    this.isActive = true;
-    this.tick();
+    // No-op, managed by subscriptions
   }
 
-  /**
-   * Stop the loop
-   */
   stop(): void {
-    this.isActive = false;
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
+    ScrollLoopManager.getInstance().unregister(this.tick);
   }
 
   private tick = (): void => {
-    if (!this.isActive) return;
-
     // Calculate Progress
     const progress = this.calculateProgress();
 
-    // Notify if changed significantly
-    if (Math.abs(progress - this.currentProgress) > 0.0001) {
+    // Notify if changed significantly (using threshold constant)
+    if (Math.abs(progress - this.currentProgress) > SCROLL_THRESHOLD) {
       this.currentProgress = progress;
       this.notify();
     }
-    // Eagerly notify? The sticky jitter might need per-frame updates even if scroll didn't change?
-    // No, scroll position drives everything. If scroll didn't change, we don't need to update.
-    // BUT we need to check every frame because scroll CAN change.
-    
-    // NOTE: If we only notify on change, we must ensure calculateProgress is accurate.
-    // Since we check every frame, it's fine.
-
-    // Force notify? 
-    // this.notify(); 
-
-    this.rafId = requestAnimationFrame(this.tick);
   };
 
   private notify() {
@@ -83,37 +98,58 @@ export class ScrollTimeline {
         try {
             cb(this.currentProgress);
         } catch (e) {
-            console.error("ScrollTimeline: Error in subscriber", e);
+            // Silent
         }
     });
   }
 
-  private calculateProgress(): number {
-    const rect = this.container.getBoundingClientRect();
-    let viewportHeight = window.innerHeight;
-    let offsetTop = 0;
+  private updateCache() {
+    if (!this.isLayoutDirty && this.cachedRect) return;
 
-    // Nested scroll support
-    const scrollParent = this.getScrollParent(this.container);
-    if (scrollParent instanceof Element) {
-      const parentRect = scrollParent.getBoundingClientRect();
-      viewportHeight = parentRect.height;
-      offsetTop = parentRect.top;
+    this.cachedRect = this.container.getBoundingClientRect();
+    
+    if (!this.cachedScrollParent) {
+        this.cachedScrollParent = this.getScrollParent(this.container);
     }
 
-    const scrollDist = rect.height - viewportHeight;
+    if (this.cachedScrollParent instanceof Element) {
+      this.cachedScrollParentRect = this.cachedScrollParent.getBoundingClientRect();
+      this.cachedViewportHeight = this.cachedScrollParentRect.height;
+      this.cachedOffsetTop = this.cachedScrollParentRect.top;
+    } else if (typeof window !== 'undefined') {
+      this.cachedViewportHeight = window.innerHeight;
+      this.cachedOffsetTop = 0;
+    }
 
+    this.isLayoutDirty = false;
+  }
+
+  private calculateProgress(): number {
+    if (this.isLayoutDirty || !this.cachedRect) {
+         this.updateCache();
+    }
+
+    const currentRect = this.container.getBoundingClientRect();
+    const scrollDist = (this.cachedRect?.height || currentRect.height) - this.cachedViewportHeight;
+
+    // Guard: Zero Height / Division by Zero
     if (scrollDist <= 0) return 1;
 
-    const relativeTop = rect.top - offsetTop;
-    return Math.min(Math.max(-relativeTop / scrollDist, 0), 1);
+    const relativeTop = currentRect.top - this.cachedOffsetTop;
+    const rawProgress = -relativeTop / scrollDist;
+    
+    const clamped = Math.min(Math.max(rawProgress, 0), 1);
+    
+    // Round to 6 decimals to prevent micro-drift
+    return Math.round(clamped * 1000000) / 1000000;
   }
 
   private getScrollParent(node: Element): Element | Window {
+    if (typeof window === 'undefined') return node; 
+
     let current = node.parentElement;
     while (current) {
       const style = getComputedStyle(current);
-      // 'auto' or 'scroll' determines scroll container
       if (['auto', 'scroll'].includes(style.overflowY)) {
         return current;
       }
@@ -123,7 +159,14 @@ export class ScrollTimeline {
   }
 
   destroy() {
-    this.stop();
     this.subscribers.clear();
+    ScrollLoopManager.getInstance().unregister(this.tick);
+    
+    if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+    }
+    if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', this.onWindowResize);
+    }
   }
 }

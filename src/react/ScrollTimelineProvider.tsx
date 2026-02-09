@@ -24,15 +24,19 @@ export function ScrollTimelineProvider({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Future-proof: factory could be passed via props
     const instance = new ScrollTimeline(containerRef.current);
-    instance.start();
+    
+    // We do NOT call start() anymore, it starts on subscription
+    // instance.start(); 
+    
     setTimeline(instance);
 
     return () => {
       instance.destroy();
       setTimeline(null);
     };
-  }, []);
+  }, []); // Dependencies? strict empty for one-time setup
 
   const containerStyle: React.CSSProperties = {
     height: scrollLength,
@@ -49,8 +53,12 @@ export function ScrollTimelineProvider({
     overflow: 'hidden',
   };
 
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  // when Parent component renders but timeline instance hasn't changed.
+  const contextValue = React.useMemo(() => ({ timeline }), [timeline]);
+
   return (
-    <ScrollTimelineContext.Provider value={{ timeline }}>
+    <ScrollTimelineContext.Provider value={contextValue}>
       <div 
         ref={containerRef} 
         className={className} 

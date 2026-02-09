@@ -23,7 +23,9 @@
     -   **Debug Overlay**: Visualize progress and frame index in real-time.
     -   **Hooks**: Exported `useScrollSequence` for custom UI implementations.
     -   **TypeScript**: First-class type definitions.
-    -   **SSR Safe**: Works perfectly with Next.js / Remix.
+    -   **SSR Safe**: Works perfectly with Next.js / Remix / Gatsby.
+    -   **A11y**: Built-in support for `prefers-reduced-motion` and ARIA attributes.
+    -   **Robust**: Error boundaries and callbacks for image load failures.
 
 ## 🤔 When to use this vs Video?
 
@@ -195,7 +197,13 @@ ARIA label for the canvas.
 
 Shows debug overlay.
 
-...
+`onError`
+
+`(error: Error) => void`
+
+`undefined`
+
+Callback fired when an image fails to load or initialization errors occur.
 
 ## 📊 Performance & compatibility
 
@@ -246,8 +254,8 @@ Not supported (Missing ES6/Canvas features)
 ### Accessibility (A11y)
 
 -   **Keyboard Navigation**: Users can scrub through the sequence using standard keyboard controls (Arrow Keys, Spacebar, Page Up/Down) because it relies on native scrolling.
--   **Screen Readers**: Add `accessibilityLabel` to `ScrollSequence` to provide a description for the canvas. Use `ScrollText` for semantic content.
--   **Reduced Motion**: `ScrollText` automatically respects `prefers-reduced-motion: reduce` by disabling translation animations while keeping fade transitions.
+-   **Screen Readers**: Add `accessibilityLabel` to `ScrollSequence` to provide a description for the canvas. Canvas has `role="img"`.
+-   **Reduced Motion**: Automatically detects `prefers-reduced-motion: reduce`. If enabled, `ScrollSequence` will disable the scroll animation and display the `fallback` content (if provided) or simply freeze the first frame to prevent motion sickness.
 
 ### Memory Usage (Benchmarks)
 

@@ -10,6 +10,7 @@ interface UseScrollSequenceParams {
   debugRef?: React.MutableRefObject<HTMLDivElement | null>;
   memoryStrategy?: 'eager' | 'lazy';
   lazyBuffer?: number;
+  onError?: (error: Error) => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export function useScrollSequence({
   debugRef,
   memoryStrategy = 'eager',
   lazyBuffer = 10,
+  onError,
 }: UseScrollSequenceParams) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<ImageController | null>(null);
@@ -45,6 +47,9 @@ export function useScrollSequence({
 
       try {
         // 1. Resolve Sequence
+        // Guard: source change handled by effect dep, but verify environment?
+        if (typeof window === 'undefined') return;
+
         const sequence = await resolveSequence(source);
         if (!active) return;
 
@@ -53,8 +58,6 @@ export function useScrollSequence({
         }
 
         // 2. Setup Dimensions (Initial)
-        // Note: Canvas size should ideally match viewport usually.
-        // We can do this on mount.
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -84,7 +87,9 @@ export function useScrollSequence({
 
       } catch (err) {
         if (active) {
-          setError(err instanceof Error ? err : new Error('Unknown initialization error'));
+          const e = err instanceof Error ? err : new Error('Unknown initialization error');
+          setError(e);
+          if (onError) onError(e);
         }
       }
     };
