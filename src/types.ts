@@ -32,6 +32,12 @@ export interface ScrollSequenceProps {
 
   /** Optional children to render inside the sticky container (e.g. ScrollText). */
   children?: React.ReactNode;
+
+  /** Component to render while the sequence is loading. */
+  fallback?: React.ReactNode;
+
+  /** Accessibility label for the canvas (role="img"). Defaults to "Scroll sequence". */
+  accessibilityLabel?: string;
 }
 
 export interface ResolvedSequence {

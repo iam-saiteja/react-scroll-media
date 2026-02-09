@@ -60,12 +60,8 @@ export class ScrollTimeline {
     // Calculate Progress
     const progress = this.calculateProgress();
 
-    // Notify only if changed? Or always?
-    // Always is better for smooth animations (React Spring style), 
-    // but if progress is identical, maybe skip?
-    // Let's always notify for now, listeners can check if value changed if they want.
-    // Actually, simple === check is good optimization.
-    if (progress !== this.currentProgress) {
+    // Notify if changed significantly
+    if (Math.abs(progress - this.currentProgress) > 0.0001) {
       this.currentProgress = progress;
       this.notify();
     }

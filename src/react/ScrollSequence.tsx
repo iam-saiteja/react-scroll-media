@@ -7,9 +7,17 @@ interface InnerSequenceProps {
     source: ScrollSequenceProps['source'];
     debug: boolean;
     memoryStrategy: ScrollSequenceProps['memoryStrategy'];
+    accessibilityLabel?: string;
+    fallback?: React.ReactNode;
 }
 
-const InnerSequence: React.FC<InnerSequenceProps> = ({ source, debug, memoryStrategy }) => {
+const InnerSequence: React.FC<InnerSequenceProps> = ({ 
+    source, 
+    debug, 
+    memoryStrategy, 
+    accessibilityLabel = "Scroll sequence",
+    fallback 
+}) => {
     const debugRef = useRef<HTMLDivElement>(null);
     const { canvasRef, isLoaded } = useScrollSequence({
       source,
@@ -17,6 +25,11 @@ const InnerSequence: React.FC<InnerSequenceProps> = ({ source, debug, memoryStra
       memoryStrategy
     });
     
+    // Fallback logic could be handled here or by parent.
+    // If we handle it here, we overlay it?
+    // Actually, canvas opacity handles the fade-in.
+    // Use fallback if provided and not loaded.
+
     const canvasStyle: React.CSSProperties = {
       display: 'block',
       width: '100%',
@@ -43,7 +56,22 @@ const InnerSequence: React.FC<InnerSequenceProps> = ({ source, debug, memoryStra
 
     return (
         <>
-            <canvas ref={canvasRef} style={canvasStyle} />
+            {/* Render fallback behind canvas, or replace? 
+                If replace, we might loose the canvas ref init?
+                Better to render both and cross-fade or just hide fallback when loaded.
+            */}
+            {!isLoaded && fallback && (
+                <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+                    {fallback}
+                </div>
+            )}
+            
+            <canvas 
+                ref={canvasRef} 
+                style={canvasStyle} 
+                role="img"
+                aria-label={accessibilityLabel}
+            />
             {debug && <div ref={debugRef} style={debugStyle}>Waiting for scroll...</div>}
         </>
     );
@@ -57,6 +85,8 @@ export const ScrollSequence = React.forwardRef<HTMLDivElement, ScrollSequencePro
       className = '',
       debug = false,
       memoryStrategy = 'eager',
+      fallback,
+      accessibilityLabel,
     } = props;
 
     // ScrollSequence now acts as the convenient "Bundle"
@@ -64,7 +94,13 @@ export const ScrollSequence = React.forwardRef<HTMLDivElement, ScrollSequencePro
     return (
       <div ref={ref} className={className} style={{ width: '100%' }}>
           <ScrollTimelineProvider scrollLength={scrollLength}>
-             <InnerSequence source={source} debug={debug} memoryStrategy={memoryStrategy} />
+             <InnerSequence 
+                source={source} 
+                debug={debug} 
+                memoryStrategy={memoryStrategy} 
+                fallback={fallback}
+                accessibilityLabel={accessibilityLabel}
+             />
              {props.children}
           </ScrollTimelineProvider>
       </div>
