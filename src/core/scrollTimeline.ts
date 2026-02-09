@@ -17,6 +17,8 @@ export class ScrollTimeline {
   private isLayoutDirty = true;
   private resizeObserver: ResizeObserver | null = null;
 
+  public readonly id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9);
+
   constructor(container: Element) {
     this.container = container;
     

@@ -1,5 +1,5 @@
+import { ScrollTimeline, TimelineCallback } from '../core/scrollTimeline';
 import { useTimelineContext } from './scrollTimelineContext';
-import type { TimelineCallback } from '../core/scrollTimeline';
 
 export interface UseScrollTimelineResult {
   /** 
@@ -9,7 +9,7 @@ export interface UseScrollTimelineResult {
   subscribe: (callback: TimelineCallback) => () => void;
   
   /** The raw timeline instance (for advanced usage) */
-  timeline: any; 
+  timeline: ScrollTimeline | null; 
 }
 
 export function useScrollTimeline(): UseScrollTimelineResult {

@@ -183,7 +183,8 @@ Loading state component.
 
 `accessibilityLabel`
 
-`string`
+`  accessibilityLabel?: string;
+  // Example: "360 degree view of the product"
 
 `"Scroll sequence"`
 
@@ -298,8 +299,24 @@ High RAM usage.
 Network errors are handled gracefully. You can provide a fallback UI that displays while images are loading or if they fail.
 
 ```tsx
-<ScrollSequence  source={{ type: 'manifest', url: '/bad_url.json' }}  fallback={<div className="error">Failed to load sequence</div>}/>
+<ScrollSequence  source={{ type: 'manifest', url: '/bad_url.json' }}  fallback={<div className="error">Failed to load sequence</div>}  onError={(e) => console.error("Sequence error:", e)}/>
 ```
+
+### Error Boundaries
+
+For robust production apps, wrap `ScrollSequence` in an Error Boundary to catch unexpected crashes:
+
+```tsx
+ class ErrorBoundary extends React.Component {   // ... implementation }
+ <ErrorBoundary fallback={<div>Something went wrong</div>}>   <ScrollSequence source={...} /> </ErrorBoundary>
+```
+
+### Multi-Instance & Nested Scroll
+
+`react-scroll-media` automatically handles multiple instances on the same page. Each instance:
+1.  Registers with a shared `RAF` loop (singleton) for optimal performance.
+2.  Calculates its own progress independently.
+3.  Should have a unique `scrollLength` or container setup.
 
 ---
 
