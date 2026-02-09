@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ScrollTimeline } from '../core/scrollTimeline';
 import { ScrollTimelineContext } from './scrollTimelineContext';
 
@@ -21,7 +21,12 @@ export function ScrollTimelineProvider({
   const containerRef = useRef<HTMLDivElement>(null);
   const [timeline, setTimeline] = useState<ScrollTimeline | null>(null);
 
-  useEffect(() => {
+  // Use layout effect to ensure timeline exists before children effects run
+  // SSR safe fallback: use useEffect on server
+  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
     if (!containerRef.current) return;
 
     // Future-proof: factory could be passed via props

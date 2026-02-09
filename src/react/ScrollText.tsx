@@ -44,8 +44,10 @@ export function ScrollText({
   const { subscribe } = useScrollTimeline();
 
   useEffect(() => {
-    // Sub to timeline
-    const unsubscribe = subscribe((globalProgress) => {
+    // Subscribe to updates
+    if (typeof window === 'undefined') return;
+
+    const unsubscribe = subscribe((progress) => {
       if (!ref.current) return;
 
       // Check for reduced motion preference
@@ -57,22 +59,22 @@ export function ScrollText({
       let currentY = effectiveTranslateY;
 
       // 1. Entrance Phase
-      if (globalProgress < start) {
+      if (progress < start) {
          opacity = initialOpacity;
          currentY = effectiveTranslateY;
-      } else if (globalProgress >= start && globalProgress <= end) {
-         const local = (globalProgress - start) / (end - start);
+      } else if (progress >= start && progress <= end) {
+         const local = (progress - start) / (end - start);
          opacity = initialOpacity + (targetOpacity - initialOpacity) * local;
          currentY = effectiveTranslateY * (1 - local);
       } 
       // 2. Hold Phase
-      else if (!exitStart || globalProgress < exitStart) {
+      else if (!exitStart || progress < exitStart) {
          opacity = targetOpacity;
          currentY = 0;
       }
       // 3. Exit Phase
-      else if (exitStart && exitEnd && globalProgress >= exitStart && globalProgress <= exitEnd) {
-         const local = (globalProgress - exitStart) / (exitEnd - exitStart);
+      else if (exitStart && exitEnd && progress >= exitStart && progress <= exitEnd) {
+         const local = (progress - exitStart) / (exitEnd - exitStart);
          opacity = targetOpacity + (finalOpacity - targetOpacity) * local;
          // Move from 0 -> -translateY (or 0 if reduced motion)
          currentY = -effectiveTranslateY * local; 

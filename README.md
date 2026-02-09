@@ -342,6 +342,8 @@ For robust production apps, wrap `ScrollSequence` in an Error Boundary to catch 
 {  type: 'manifest',  url: '/sequence.json' }// JSON format: { "frames": ["url1", "url2"] } OR pattern config
 ```
 
+> **Note**: Manifests are cached in memory by URL. To force a refresh, append a query param (e.g. `?v=2`).
+
 ---
 
 ## 🏗️ Architecture

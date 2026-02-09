@@ -28,6 +28,9 @@ export class ScrollTimeline {
         this.isLayoutDirty = true;
       });
       this.resizeObserver.observe(this.container);
+      if (document.body) {
+          this.resizeObserver.observe(document.body);
+      }
       
       // Also listen to global resize
       window.addEventListener('resize', this.onWindowResize);

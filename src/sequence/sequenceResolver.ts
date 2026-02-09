@@ -85,12 +85,12 @@ async function processManifestMode(url: string): Promise<ResolvedSequence> {
 
   const promise = (async () => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch manifest: ${response.statusText}`);
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch manifest: ${res.statusText}`);
       }
   
-      const data = await response.json();
+      const data = await res.json();
   
       // Check for "frames" array in manifest
       if (data.frames && Array.isArray(data.frames)) {
