@@ -15,26 +15,25 @@ declare const process: { env: { NODE_ENV: string } };
  * Resolves frame sequence from props.
  * Prioritizes: frames > pattern > manifest
  */
-export async function resolveSequence(props: ScrollSequenceProps): Promise<ResolvedSequence> {
-  const { frames, pattern, manifest, start = 1, end, pad } = props;
-
-  // Mode A: Manual Frames
-  if (frames && frames.length > 0) {
-    return processManualFrames(frames);
+/**
+ * Resolves frame sequence from props.
+ * Handles 'manual', 'pattern', and 'manifest' sources.
+ */
+export async function resolveSequence(source: ScrollSequenceProps['source']): Promise<ResolvedSequence> {
+  switch (source.type) {
+    case 'manual':
+      return processManualFrames(source.frames);
+    
+    case 'pattern':
+      return processPatternMode(source.url, source.start ?? 1, source.end, source.pad);
+      
+    case 'manifest':
+      return processManifestMode(source.url);
+      
+    default:
+      console.error("ScrollSequence: Invalid source type provided.");
+      return { frames: [], frameCount: 0 };
   }
-
-  // Mode B: Pattern Mode
-  if (pattern && typeof end === 'number') {
-    return processPatternMode(pattern, start, end, pad);
-  }
-
-  // Mode C: Manifest Mode
-  if (manifest) {
-    return processManifestMode(manifest);
-  }
-
-  console.error("ScrollSequence: No valid frame source provided. Must provide 'frames', 'pattern' + 'end', or 'manifest'.");
-  return { frames: [], frameCount: 0 };
 }
 
 /**

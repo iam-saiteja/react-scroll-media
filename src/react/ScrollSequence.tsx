@@ -44,12 +44,7 @@ export const ScrollSequence = React.forwardRef<
   ) => {
     // Destructure known props, pass rest to container
     const {
-      frames,
-      pattern,
-      manifest,
-      start,
-      end,
-      pad,
+      source,
       scrollLength = '200vh',
       pin = true,
       className = '',
@@ -74,15 +69,8 @@ export const ScrollSequence = React.forwardRef<
       const loadSequence = async () => {
         setIsLoaded(false);
         try {
-          // Pass all relevant props to resolver
-          const result = await resolveSequence({
-            frames,
-            pattern,
-            manifest,
-            start,
-            end,
-            pad
-          });
+          // Pass source prop to resolver
+          const result = await resolveSequence(source);
           
           if (active && result.frames.length > 0) {
             setResolvedFrames(result.frames);
@@ -96,7 +84,7 @@ export const ScrollSequence = React.forwardRef<
       loadSequence();
 
       return () => { active = false; };
-    }, [frames, pattern, manifest, start, end, pad]);
+    }, [source]);
 
     // Initialize Engine & Controller once frames are loaded
     useEffect(() => {
