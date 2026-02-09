@@ -52,24 +52,28 @@ export class ScrollEngine {
     if (!this.isActive) return;
 
     const rect = this.container.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
+    let viewportHeight = window.innerHeight;
+    let offsetTop = 0;
+
+    // Find closest scrollable parent
+    const scrollParent = this.getScrollParent(this.container);
+    if (scrollParent instanceof Element) {
+      const parentRect = scrollParent.getBoundingClientRect();
+      viewportHeight = parentRect.height;
+      offsetTop = parentRect.top;
+      // Also clip execution if parent is not consistent? No.
+    }
     
-    // Total distance the container can "scroll" while the sticky element is pinned
-    // is (containerHeight - viewportHeight).
-    // The sticky element is pinned for this duration.
+    // Total distance the container can "scroll"
     const scrollDist = rect.height - viewportHeight;
 
     let progress = 0;
 
     if (scrollDist > 0) {
-      // rect.top is 0 when container starts entering viewport (top align)
-      // As we scroll down, rect.top becomes negative.
-      // Progress = 0 when rect.top = 0
-      // Progress = 1 when rect.top = -scrollDist
-      progress = -rect.top / scrollDist;
+      // Calculate relative top position
+      const relativeTop = rect.top - offsetTop;
+      progress = -relativeTop / scrollDist;
     } else {
-      // Container fits or is smaller than viewport, always show end or start?
-      // If height <= 100vh, there's no scrollable distance. Default to 1 (show full).
       progress = 1;
     }
 
@@ -78,6 +82,21 @@ export class ScrollEngine {
     // Schedule next frame
     this.rafId = requestAnimationFrame(this.tick);
   };
+    
+  /**
+   * Find the nearest scrollable parent.
+   */
+  private getScrollParent(node: Element): Element | Window {
+    let current = node.parentElement;
+    while (current) {
+      const style = getComputedStyle(current);
+      if (['auto', 'scroll'].includes(style.overflowY)) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return window;
+  }
     
   /**
    * Clean up resources.
