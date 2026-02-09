@@ -10,7 +10,7 @@ import type { ScrollSequenceProps } from '../types';
 import { ScrollEngine } from '../core/scrollEngine';
 import { EventScrollEngine } from '../core/eventScrollEngine';
 import { clamp } from '../core/clamp';
-import { sequenceResolver } from '../sequence/sequenceResolver';
+import { resolveSequence } from '../sequence/sequenceResolver';
 import { ImageController } from '../controllers/imageController';
 
 /**
@@ -32,35 +32,80 @@ import { ImageController } from '../controllers/imageController';
  * />
  * ```
  */
+
+
 export const ScrollSequence = React.forwardRef<
   HTMLDivElement,
   ScrollSequenceProps
 >(
   (
-    {
+    props,
+    ref
+  ) => {
+    // Destructure known props, pass rest to container
+    const {
       frames,
+      pattern,
+      manifest,
+      start,
+      end,
+      pad,
       scrollLength = '200vh',
       pin = true,
       className = '',
       fullscreen = true,
       lockScroll = false,
-    },
-    ref
-  ) => {
+    } = props;
+
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<ScrollEngine | EventScrollEngine | null>(null);
     const controllerRef = useRef<ImageController | null>(null);
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
+    
+    // State to hold resolved frames
+    const [resolvedFrames, setResolvedFrames] = React.useState<string[]>([]);
+    const [isLoaded, setIsLoaded] = React.useState(false);
 
+    // Resolve sequence on mount or when Sequence props change
     useEffect(() => {
+      let active = true;
+
+      const loadSequence = async () => {
+        setIsLoaded(false);
+        try {
+          // Pass all relevant props to resolver
+          const result = await resolveSequence({
+            frames,
+            pattern,
+            manifest,
+            start,
+            end,
+            pad
+          });
+          
+          if (active && result.frames.length > 0) {
+            setResolvedFrames(result.frames);
+            setIsLoaded(true);
+          }
+        } catch (err) {
+          console.error("ScrollSequence: Failed to resolve sequence", err);
+        }
+      };
+
+      loadSequence();
+
+      return () => { active = false; };
+    }, [frames, pattern, manifest, start, end, pad]);
+
+    // Initialize Engine & Controller once frames are loaded
+    useEffect(() => {
+      if (!isLoaded || resolvedFrames.length === 0) return;
+
       const container = containerRef.current;
       const canvas = canvasRef.current;
 
       if (!container || !canvas) return;
-
-      // Resolve and sort frames numerically
-      const { frames: sortedFrames } = sequenceResolver(frames);
 
       /**
        * Update canvas size based on container dimensions.
@@ -77,7 +122,7 @@ export const ScrollSequence = React.forwardRef<
       // Initialize ImageController
       controllerRef.current = new ImageController({
         canvas,
-        frames: sortedFrames,
+        frames: resolvedFrames,
       });
 
       // For fullscreen mode, find the scrollable inner container
@@ -104,12 +149,8 @@ export const ScrollSequence = React.forwardRef<
             controllerRef.current?.update(clamped);
           },
           virtualScroll,
-          container // Listen on container (or window if needed, but container is safer if it covers screen)
+          container // Listen on container (or window if needed)
         );
-        
-        // If container doesn't cover screen, might need window listener. 
-        // But assuming generic container for now.
-        // Actually, if fullscreen, container is 100vh.
       } else {
         // Use standard ScrollEngine
         engineRef.current = new ScrollEngine(
@@ -143,13 +184,13 @@ export const ScrollSequence = React.forwardRef<
 
       resizeObserverRef.current.observe(container);
 
-      // Cleanup on unmount
+      // Cleanup on unmount or re-render
       return () => {
         engineRef.current?.destroy();
         controllerRef.current?.destroy();
         resizeObserverRef.current?.disconnect();
       };
-    }, [frames, fullscreen, lockScroll, scrollLength]);
+    }, [isLoaded, resolvedFrames, fullscreen, lockScroll, scrollLength]);
 
     const containerStyle: React.CSSProperties = {
       height: fullscreen ? '100vh' : scrollLength,
@@ -173,7 +214,9 @@ export const ScrollSequence = React.forwardRef<
       position: fullscreen ? 'absolute' : pin ? 'sticky' : 'relative',
       top: fullscreen ? 0 : pin ? 0 : undefined,
       left: fullscreen ? 0 : undefined,
-      pointerEvents: lockScroll ? 'auto' : 'none', // Allow events if locked, otherwise pass through
+      pointerEvents: lockScroll ? 'auto' : 'none',
+      opacity: isLoaded ? 1 : 0,
+      transition: 'opacity 0.2s ease-in',
     };
 
     return (
@@ -203,3 +246,5 @@ export const ScrollSequence = React.forwardRef<
 );
 
 ScrollSequence.displayName = 'ScrollSequence';
+
+

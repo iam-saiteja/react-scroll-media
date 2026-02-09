@@ -14,7 +14,7 @@ export { ScrollEngine } from './core/scrollEngine';
 export { clamp } from './core/clamp';
 
 // Sequence utilities (advanced users)
-export { sequenceResolver } from './sequence/sequenceResolver';
+export { resolveSequence } from './sequence/sequenceResolver';
 
 // Controllers (advanced users)
 export { ImageController } from './controllers/imageController';
