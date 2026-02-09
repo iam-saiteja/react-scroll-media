@@ -10,13 +10,16 @@ export class ScrollEngine {
   private callback: ScrollEngineCallback;
   private rafId: number | null = null;
   private isActive = false;
+  private scrollElement: Element | null;
 
   /**
    * Create a new ScrollEngine instance.
    * @param callback - Function called with progress (0-1) on each frame
+   * @param scrollElement - Optional element to track scroll on. If null, tracks window scroll.
    */
-  constructor(callback: ScrollEngineCallback) {
+  constructor(callback: ScrollEngineCallback, scrollElement: Element | null = null) {
     this.callback = callback;
+    this.scrollElement = scrollElement;
   }
 
   /**
@@ -45,11 +48,19 @@ export class ScrollEngine {
   private tick = (): void => {
     if (!this.isActive) return;
 
-    // Calculate progress: scrollTop / (scrollHeight - viewportHeight)
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const scrollHeight =
-      document.documentElement.scrollHeight - window.innerHeight;
-    const progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+    let progress = 0;
+
+    if (this.scrollElement) {
+      // Element-based scrolling for fullscreen mode
+      const scrollTop = this.scrollElement.scrollTop;
+      const scrollHeight = this.scrollElement.scrollHeight - this.scrollElement.clientHeight;
+      progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+    } else {
+      // Window-based scrolling for regular mode
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+    }
 
     this.callback(progress);
 
