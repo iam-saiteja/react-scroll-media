@@ -6,17 +6,20 @@
   "author": "Thanniru Sai Teja",
   "repository": {
     "type": "git",
-    "url": "https://github.com/iam-saiteja/react-scroll-media.git"
+    "url": "git+https://github.com/iam-saiteja/react-scroll-media.git"
   },
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": {
+        "import": "./dist/index.d.mts",
+        "require": "./dist/index.d.ts"
+      },
       "module": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.js"
     }
   },
   "files": [
@@ -37,7 +40,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "clean": "rm -rf dist"
+    "clean": "if exist dist rmdir /s /q dist"
   },
   "keywords": [
     "react",
