@@ -4,7 +4,9 @@
  */
 
 // Public exports
+// Public exports
 export { ScrollSequence } from './react/ScrollSequence';
+export { useScrollSequence } from './react/useScrollSequence';
 
 // Types
 export type { ScrollSequenceProps, ResolvedSequence, ScrollProgress } from './types';

@@ -98,34 +98,50 @@ function processPatternMode(pattern: string, start: number, end: number, pad?: n
 /**
  * Mode C: Fetch and process manifest
  */
+const manifestCache = new Map<string, Promise<ResolvedSequence>>();
+
+/**
+ * Mode C: Fetch and process manifest
+ */
 async function processManifestMode(url: string): Promise<ResolvedSequence> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch manifest: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    // Check for "frames" array in manifest
-    if (data.frames && Array.isArray(data.frames)) {
-      return processManualFrames(data.frames);
-    }
-
-    // Check for pattern config in manifest
-    if (data.pattern && typeof data.end === 'number') {
-      const start = data.start ?? 1;
-      const pad = data.pad;
-      return processPatternMode(data.pattern, start, data.end, pad);
-    }
-
-    console.warn("ScrollSequence: Invalid manifest format. Missing 'frames' or 'pattern' config.");
-    return { frames: [], frameCount: 0 };
-
-  } catch (err) {
-    console.error("ScrollSequence: Error loading manifest:", err);
-    return { frames: [], frameCount: 0 };
+  if (manifestCache.has(url)) {
+    return manifestCache.get(url)!;
   }
+
+  const promise = (async () => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch manifest: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+  
+      // Check for "frames" array in manifest
+      if (data.frames && Array.isArray(data.frames)) {
+        return processManualFrames(data.frames);
+      }
+  
+      // Check for pattern config in manifest
+      if (data.pattern && typeof data.end === 'number') {
+        const start = data.start ?? 1;
+        const pad = data.pad;
+        return processPatternMode(data.pattern, start, data.end, pad);
+      }
+  
+      console.warn("ScrollSequence: Invalid manifest format. Missing 'frames' or 'pattern' config.");
+      return { frames: [], frameCount: 0 };
+  
+    } catch (err) {
+      console.error("ScrollSequence: Error loading manifest:", err);
+      // Remove from cache on error so retry is possible
+      manifestCache.delete(url);
+      return { frames: [], frameCount: 0 };
+    }
+  })();
+
+  manifestCache.set(url, promise);
+  return promise;
 }
 
 // --- Helpers ---

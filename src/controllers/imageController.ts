@@ -78,8 +78,18 @@ export class ImageController {
       const img = new Image();
 
       img.onload = () => {
-        this.imageCache.set(src, img);
-        resolve(img);
+        // Use decode() to ensure image is ready for painting without jank
+        img.decode()
+          .then(() => {
+            this.imageCache.set(src, img);
+            resolve(img);
+          })
+          .catch((err) => {
+             // Decode failed (rare), but load succeeded. Fallback to just resolving.
+             console.warn(`ImageController: Decode failed for ${src}`, err);
+             this.imageCache.set(src, img);
+             resolve(img);
+          });
       };
 
       img.onerror = () => {
