@@ -68,30 +68,79 @@ export default function MyPage() {
 }
 ```
 
-### Advanced: Custom Hook (`useScrollSequence`)
+### ✨ Scrollytelling & Composition
 
-For full control over the specialized UI, use the headless hook.
+You can nest components inside `ScrollSequence`. They will be placed in the sticky container and can react to the timeline.
+
+#### Animated Text (`ScrollText`)
+Animate opacity and position based on scroll progress (0 to 1). Supports enter and exit phases.
+
+```tsx
+import { ScrollSequence, ScrollText } from 'react-scroll-media';
+
+<ScrollSequence source={...} scrollLength="400vh">
+  
+  {/* Fade In (0.1-0.2) -> Hold -> Fade Out (0.8-0.9) */}
+  <ScrollText 
+    start={0.1} 
+    end={0.2} 
+    exitStart={0.8}
+    exitEnd={0.9}
+    translateY={50} 
+    className="my-text-overlay"
+  >
+    Cinematic Experience
+  </ScrollText>
+
+</ScrollSequence>
+```
+
+#### Word Reveal (`ScrollWordReveal`)
+Reveals text word-by-word as you scroll.
+
+```tsx
+import { ScrollWordReveal } from 'react-scroll-media';
+
+<ScrollWordReveal 
+    text="Experience the smooth cinematic scroll."
+    start={0.4}
+    end={0.6}
+    style={{ fontSize: '2rem', color: 'white' }}
+/>
+```
+
+### Advanced: Custom Hooks
+
+For full control over the specialized UI, use the headless hooks.
+
+#### `useScrollSequence`
+Mangages the canvas image controller.
 
 ```tsx
 import { useScrollSequence } from 'react-scroll-media';
 
 const CustomScroller = () => {
-    const debugRef = useRef<HTMLDivElement>(null);
-    
-    const { containerRef, canvasRef, isLoaded } = useScrollSequence({
-        source: { type: 'pattern', url: '/img_{index}.jpg', start: 1, end: 100 },
-        memoryStrategy: 'lazy',
-        debugRef
-    });
+    // ... setup refs
+    const { containerRef, canvasRef, isLoaded } = useScrollSequence({ ... });
+    // ... render custom structure
+};
+```
 
-    return (
-        <div ref={containerRef} style={{ height: '400vh', position: 'relative' }}>
-            <div style={{ position: 'sticky', top: 0, height: '100vh' }}>
-                <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
-                <div ref={debugRef} style={{ position: 'absolute', top: 10 }}></div>
-            </div>
-        </div>
-    );
+#### `useScrollTimeline`
+Subscribe to the scroll timeline in any component.
+
+```tsx
+import { useScrollTimeline } from 'react-scroll-media';
+
+const MyComponent = () => {
+  const { subscribe } = useScrollTimeline();
+
+  // Subscribe to progress (0-1)
+  useEffect(() => subscribe((progress) => {
+      console.log('Progress:', progress);
+  }), [subscribe]);
+
+  return <div>...</div>;
 };
 ```
 
