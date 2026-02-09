@@ -25,6 +25,17 @@
   - **TypeScript**: First-class type definitions.
   - **SSR Safe**: Works perfectly with Next.js / Remix.
 
+## 🤔 When to use this vs Video?
+| Feature | Video (`<video>`) | Scroll Sequence (`react-scroll-media`) |
+|---------|-------------------|----------------------------------------|
+| **Quality** | Compressed (artifacts) | Lossless / Exact Frames (CRISP) |
+| **Transparency** | Difficult (needs webm/hevc) | Native PNG/WebP Transparency (Easy) |
+| **Scrubbing** | Janky (keyframe dependency) | 1:1 Instant Scrubbing |
+| **Mobile** | Auto-play often blocked | Works everywhere |
+| **File Size** | Small | Large (requires optimization/lazy loading) |
+
+Use **Scroll Sequence** when you need perfect interaction, transparency, or crystal-clear product visuals (like Apple). Use **Video** for long, non-interactive backgrounds.
+
 ---
 
 ## 📦 Installation
@@ -114,7 +125,7 @@ import { ScrollWordReveal } from 'react-scroll-media';
 For full control over the specialized UI, use the headless hooks.
 
 #### `useScrollSequence`
-Mangages the canvas image controller.
+Manages the canvas image controller.
 
 ```tsx
 import { useScrollSequence } from 'react-scroll-media';
@@ -163,6 +174,11 @@ const MyComponent = () => {
 
 ## 📊 Performance & compatibility
 
+### Bundle Size
+- **Minified**: ~22.0 kB
+- **Gzipped**: ~6.08 kB
+- Zero dependencies (uses native Canvas API, no heavyweight libraries).
+
 ### Browser Support
 | Browser | Status | Note |
 |---------|--------|------|
@@ -171,6 +187,11 @@ const MyComponent = () => {
 | Safari | ✅ | Full support (Desktop & Mobile) |
 | Edge | ✅ | Full support |
 | IE11 | ❌ | Not supported (Missing ES6/Canvas features) |
+
+### Accessibility (A11y)
+- **Keyboard Navigation**: Users can scrub through the sequence using standard keyboard controls (Arrow Keys, Spacebar, Page Up/Down) because it relies on native scrolling.
+- **Screen Readers**: Add `accessibilityLabel` to `ScrollSequence` to provide a description for the canvas. Use `ScrollText` for semantic content.
+- **Reduced Motion**: `ScrollText` automatically respects `prefers-reduced-motion: reduce` by disabling translation animations while keeping fade transitions.
 
 ### Memory Usage (Benchmarks)
 Tested on 1080p frames.

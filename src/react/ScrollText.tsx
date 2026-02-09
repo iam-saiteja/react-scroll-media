@@ -48,17 +48,22 @@ export function ScrollText({
     const unsubscribe = subscribe((globalProgress) => {
       if (!ref.current) return;
 
+      // Check for reduced motion preference
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // If reduced motion is preferred, disable translation (keep opacity fade)
+      const effectiveTranslateY = prefersReducedMotion ? 0 : translateY;
+
       let opacity = initialOpacity;
-      let currentY = translateY;
+      let currentY = effectiveTranslateY;
 
       // 1. Entrance Phase
       if (globalProgress < start) {
          opacity = initialOpacity;
-         currentY = translateY;
+         currentY = effectiveTranslateY;
       } else if (globalProgress >= start && globalProgress <= end) {
          const local = (globalProgress - start) / (end - start);
          opacity = initialOpacity + (targetOpacity - initialOpacity) * local;
-         currentY = translateY * (1 - local);
+         currentY = effectiveTranslateY * (1 - local);
       } 
       // 2. Hold Phase
       else if (!exitStart || globalProgress < exitStart) {
@@ -69,17 +74,13 @@ export function ScrollText({
       else if (exitStart && exitEnd && globalProgress >= exitStart && globalProgress <= exitEnd) {
          const local = (globalProgress - exitStart) / (exitEnd - exitStart);
          opacity = targetOpacity + (finalOpacity - targetOpacity) * local;
-         // Optional: move up on exit? Or just stay? 
-         // Let's move UP by translateY (negative) for symmetry, or 0? 
-         // User didn't specify, but "going out" usually implies movement.
-         // Let's implement symmetry: Moves from translateY -> 0 during enter.
-         // Moves from 0 -> -translateY during exit?
-         currentY = -translateY * local; 
+         // Move from 0 -> -translateY (or 0 if reduced motion)
+         currentY = -effectiveTranslateY * local; 
       }
       // 4. Final Phase
       else {
          opacity = finalOpacity;
-         currentY = -translateY;
+         currentY = -effectiveTranslateY;
       }
 
       // Apply styles
