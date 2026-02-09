@@ -1,9 +1,9 @@
 import { useRef, useEffect, useState } from 'react';
 import type { ScrollSequenceProps } from '../types';
-import { ScrollEngine } from '../core/scrollEngine';
 import { ImageController } from '../controllers/imageController';
 import { resolveSequence } from '../sequence/sequenceResolver';
 import { clamp } from '../core/clamp';
+import { useScrollTimeline } from './useScrollTimeline';
 
 interface UseScrollSequenceParams {
   source: ScrollSequenceProps['source'];
@@ -11,33 +11,35 @@ interface UseScrollSequenceParams {
   memoryStrategy?: 'eager' | 'lazy';
 }
 
+/**
+ * Hook to manage image sequence in a timeline context.
+ * MUST be used inside ScrollTimelineProvider.
+ */
 export function useScrollSequence({
   source,
   debugRef,
   memoryStrategy = 'eager',
 }: UseScrollSequenceParams) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<ScrollEngine | null>(null);
   const controllerRef = useRef<ImageController | null>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  
+  // Use the shared timeline
+  const { subscribe } = useScrollTimeline();
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let active = true;
-    let currentEngine: ScrollEngine | null = null;
     let currentController: ImageController | null = null;
-    let currentObserver: ResizeObserver | null = null;
+    let unsubscribeTimeline: (() => void) | null = null;
 
     const init = async () => {
       setIsLoaded(false);
       setError(null);
 
-      const container = containerRef.current;
       const canvas = canvasRef.current;
-      if (!container || !canvas) return;
+      if (!canvas) return;
 
       try {
         // 1. Resolve Sequence
@@ -49,14 +51,11 @@ export function useScrollSequence({
           return;
         }
 
-        // 2. Setup Dimensions
-        const updateCanvasSize = () => {
-          const rect = container.getBoundingClientRect();
-          // Canvas matches container width and viewport height (sticky)
-          canvas.width = rect.width;
-          canvas.height = window.innerHeight; 
-          currentController?.setCanvasSize(rect.width, window.innerHeight);
-        };
+        // 2. Setup Dimensions (Initial)
+        // Note: Canvas size should ideally match viewport usually.
+        // We can do this on mount.
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
         // 3. Initialize Controller
         currentController = new ImageController({
@@ -66,29 +65,18 @@ export function useScrollSequence({
         });
         controllerRef.current = currentController;
 
-        // 4. Initialize Engine
-        currentEngine = new ScrollEngine(
-          (p) => {
-             const clamped = clamp(p);
-             currentController?.update(clamped);
+        // 4. Subscribe to Timeline
+        unsubscribeTimeline = subscribe((progress) => {
+            if (!currentController) return;
+            const clamped = clamp(progress);
+            currentController.update(clamped);
 
-             // Update Debug Overlay (Direct DOM manipulation for perf)
-             if (debugRef?.current) {
+            // Debug Overlay
+            if (debugRef?.current) {
                 const frameIndex = Math.floor(clamped * (sequence.frames.length - 1));
                 debugRef.current.innerText = `Progress: ${clamped.toFixed(2)}\nFrame: ${frameIndex + 1} / ${sequence.frames.length}`;
-             }
-          },
-          container
-        );
-        engineRef.current = currentEngine;
-
-        // 5. Start & Observe
-        updateCanvasSize(); // Initial size
-        currentEngine.start();
-
-        currentObserver = new ResizeObserver(updateCanvasSize);
-        currentObserver.observe(container);
-        resizeObserverRef.current = currentObserver;
+            }
+        });
 
         if (active) setIsLoaded(true);
 
@@ -104,17 +92,13 @@ export function useScrollSequence({
 
     return () => {
       active = false;
-      currentEngine?.destroy();
       currentController?.destroy();
-      currentObserver?.disconnect();
-      engineRef.current = null;
       controllerRef.current = null;
-      resizeObserverRef.current = null;
+      if (unsubscribeTimeline) unsubscribeTimeline();
     };
-  }, [source, memoryStrategy]);
+  }, [source, memoryStrategy, subscribe]); // Re-run if source or timeline changes
 
   return {
-    containerRef,
     canvasRef,
     isLoaded,
     error

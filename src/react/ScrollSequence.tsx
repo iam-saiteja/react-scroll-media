@@ -1,60 +1,22 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { ScrollSequenceProps } from '../types';
 import { useScrollSequence } from './useScrollSequence';
+import { ScrollTimelineProvider } from './ScrollTimelineProvider';
 
-/**
- * ScrollSequence Component
- *
- * Renders an image sequence that progresses based on scroll position.
- * The canvas sticks to viewport (if `pin={true}`) while the container scrolls.
- *
- * @example
- * ```tsx
- * <ScrollSequence
- *   source={{ type: 'manual', frames: [...] }}
- *   scrollLength="200vh"
- *   pin={true}
- * />
- * ```
- */
-export const ScrollSequence = React.forwardRef<
-  HTMLDivElement,
-  ScrollSequenceProps
->(
-  (
-    props,
-    ref
-  ) => {
-    const {
-      source,
-      scrollLength = '300vh',
-      className = '',
-      debug = false,
-      memoryStrategy = 'eager',
-    } = props;
+interface InnerSequenceProps {
+    source: ScrollSequenceProps['source'];
+    debug: boolean;
+    memoryStrategy: ScrollSequenceProps['memoryStrategy'];
+}
 
-    const debugRef = React.useRef<HTMLDivElement>(null);
-
-    const { containerRef, canvasRef, isLoaded } = useScrollSequence({
+const InnerSequence: React.FC<InnerSequenceProps> = ({ source, debug, memoryStrategy }) => {
+    const debugRef = useRef<HTMLDivElement>(null);
+    const { canvasRef, isLoaded } = useScrollSequence({
       source,
       debugRef,
-      memoryStrategy,
+      memoryStrategy
     });
-
-    const containerStyle: React.CSSProperties = {
-      height: scrollLength,
-      position: 'relative',
-      width: '100%',
-    };
-
-    const stickyWrapperStyle: React.CSSProperties = {
-      position: 'sticky',
-      top: 0,
-      height: '100vh',
-      width: '100%',
-      overflow: 'hidden',
-    };
-
+    
     const canvasStyle: React.CSSProperties = {
       display: 'block',
       width: '100%',
@@ -80,20 +42,32 @@ export const ScrollSequence = React.forwardRef<
     };
 
     return (
-      <div
-        ref={ref || containerRef}
-        className={className}
-        style={containerStyle}
-      >
-        <div style={stickyWrapperStyle}>
-          <canvas ref={canvasRef} style={canvasStyle} />
-          {debug && <div ref={debugRef} style={debugStyle}>Waiting for scroll...</div>}
-        </div>
+        <>
+            <canvas ref={canvasRef} style={canvasStyle} />
+            {debug && <div ref={debugRef} style={debugStyle}>Waiting for scroll...</div>}
+        </>
+    );
+};
+
+export const ScrollSequence = React.forwardRef<HTMLDivElement, ScrollSequenceProps>(
+  (props, ref) => {
+    const {
+      source,
+      scrollLength = '300vh',
+      className = '',
+      debug = false,
+      memoryStrategy = 'eager',
+    } = props;
+
+    // ScrollSequence now acts as the convenient "Bundle"
+    // It provides the Timeline context and renders the Canvas consumer.
+    return (
+      <div ref={ref} className={className} style={{ width: '100%' }}>
+          <ScrollTimelineProvider scrollLength={scrollLength}>
+             <InnerSequence source={source} debug={debug} memoryStrategy={memoryStrategy} />
+             {props.children}
+          </ScrollTimelineProvider>
       </div>
     );
   }
 );
-
-ScrollSequence.displayName = 'ScrollSequence';
-
-

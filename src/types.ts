@@ -29,6 +29,9 @@ export interface ScrollSequenceProps {
 
   /** CSS class name for the container div. */
   className?: string;
+
+  /** Optional children to render inside the sticky container (e.g. ScrollText). */
+  children?: React.ReactNode;
 }
 
 export interface ResolvedSequence {

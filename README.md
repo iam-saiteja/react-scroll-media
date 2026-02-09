@@ -180,7 +180,3 @@ Frame: 45 / 100
 This overlay is updated directly via DOM manipulation (bypassing React renders) for zero overhead.
 
 ---
-
-## 📄 License
-
-MIT © 2024

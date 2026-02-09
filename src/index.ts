@@ -7,12 +7,15 @@
 // Public exports
 export { ScrollSequence } from './react/ScrollSequence';
 export { useScrollSequence } from './react/useScrollSequence';
+export { ScrollTimelineProvider } from './react/ScrollTimelineProvider';
+export { ScrollText } from './react/ScrollText';
+export { useScrollTimeline } from './react/useScrollTimeline';
 
 // Types
 export type { ScrollSequenceProps, ResolvedSequence, ScrollProgress } from './types';
 
 // Core utilities (advanced users)
-export { ScrollEngine } from './core/scrollEngine';
+export { ScrollTimeline } from './core/scrollTimeline';
 export { clamp } from './core/clamp';
 
 // Sequence utilities (advanced users)
