@@ -17,6 +17,13 @@ export interface ScrollSequenceProps {
   /** If true, shows a debug overlay with progress and frame info. */
   debug?: boolean;
 
+  /** 
+   * Memory management strategy. 
+   * 'eager' (default): Preloads all images on mount. Smooth playback, higher memory.
+   * 'lazy': Loads images only when needed (curren frame ±3). Saves memory, may stutter on slow networks.
+   */
+  memoryStrategy?: 'eager' | 'lazy';
+
   /** CSS height for the scroll container. Defines the total scroll distance. */
   scrollLength?: string;
 

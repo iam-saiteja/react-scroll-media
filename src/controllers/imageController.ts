@@ -10,6 +10,9 @@ export interface ImageControllerConfig {
 
   /** Array of sorted frame URLs */
   frames: string[];
+
+  /** Memory management strategy */
+  strategy?: 'eager' | 'lazy';
 }
 
 export class ImageController {
@@ -19,10 +22,10 @@ export class ImageController {
   private imageCache = new Map<string, HTMLImageElement>();
   private loadingPromises = new Map<string, Promise<HTMLImageElement>>();
   private currentFrameIndex = -1;
+  private strategy: 'eager' | 'lazy';
 
   /**
    * Create a new ImageController instance.
-   * Automatically preloads the first frame.
    *
    * @param config - Configuration object
    * @throws If canvas doesn't support 2D context
@@ -30,6 +33,7 @@ export class ImageController {
   constructor(config: ImageControllerConfig) {
     this.canvas = config.canvas;
     this.frames = config.frames;
+    this.strategy = config.strategy || 'eager';
 
     const ctx = this.canvas.getContext('2d');
     if (!ctx) {
@@ -37,8 +41,51 @@ export class ImageController {
     }
     this.ctx = ctx;
 
-    // Preload first frame immediately
-    void this.preloadFrame(0);
+    if (this.strategy === 'eager') {
+      this.preloadAll();
+    } else {
+      // Lazy: Load first few frames initially
+      this.ensureFrameWindow(0);
+    }
+  }
+
+  /**
+   * Preload all frames (Eager Mode)
+   */
+  private preloadAll(): void {
+    this.frames.forEach((_, index) => this.preloadFrame(index));
+  }
+
+  /**
+   * Ensure frames around the current index are loaded (Lazy Mode)
+   * Keeps ±3 frames, unloads others.
+   */
+  private ensureFrameWindow(currentIndex: number): void {
+    const radius = 3;
+    const start = Math.max(0, currentIndex - radius);
+    const end = Math.min(this.frames.length - 1, currentIndex + radius);
+    
+    const needed = new Set<string>();
+
+    // 1. Identify needed frames
+    for (let i = start; i <= end; i++) {
+        needed.add(this.frames[i]);
+    }
+
+    // 2. Cleanup unused frames
+    for (const [src] of this.imageCache) {
+        if (!needed.has(src)) {
+            // Also need to check if it's currently being awaited?
+            // For simplicity, just delete from cache.
+            this.imageCache.delete(src);
+            this.loadingPromises.delete(src);
+        }
+    }
+
+    // 3. Load needed frames
+    for (let i = start; i <= end; i++) {
+        void this.preloadFrame(i);
+    }
   }
 
   /**
@@ -81,6 +128,8 @@ export class ImageController {
         // Use decode() to ensure image is ready for painting without jank
         img.decode()
           .then(() => {
+            // In lazy mode, we might have scrolled away while loading.
+            // But we'll cache it anyway for now, next sweep will clean it if needed.
             this.imageCache.set(src, img);
             resolve(img);
           })
@@ -93,6 +142,8 @@ export class ImageController {
       };
 
       img.onerror = () => {
+        // Don't reject, just resolve so Promise.all doesn't fail?
+        // Actually we trap errors in preloadFrame, so rejection is fine.
         reject(new Error(`Failed to load image: ${src}`));
       };
 
@@ -103,24 +154,28 @@ export class ImageController {
   /**
    * Update the canvas with the frame corresponding to the given progress.
    * Only redraws if the frame index changes.
-   * Preloads the next frame ahead of time.
    *
    * @param progress - Progress value between 0 and 1
    */
   update(progress: number): void {
+    if (this.frames.length === 0) return;
+
     // Calculate frame index (0 to frameCount - 1)
     const frameIndex = Math.floor(progress * (this.frames.length - 1));
+
+    if (this.strategy === 'lazy') {
+      this.ensureFrameWindow(frameIndex);
+    } else {
+        // Eager mode: maybe check next frame? logic was:
+        // if (frameIndex + 1 < this.frames.length) void this.preloadFrame(frameIndex + 1);
+        // But eager preloads all at start.
+    }
 
     // Avoid redraw if frame hasn't changed
     if (frameIndex === this.currentFrameIndex) return;
 
     this.currentFrameIndex = frameIndex;
     this.drawFrame(frameIndex);
-
-    // Preload next frame for smooth playback
-    if (frameIndex + 1 < this.frames.length) {
-      void this.preloadFrame(frameIndex + 1);
-    }
   }
 
   /**
@@ -135,8 +190,22 @@ export class ImageController {
     const src = this.frames[index];
     const img = this.imageCache.get(src);
 
-    // Image not yet loaded
-    if (!img) return;
+    // Image not yet loaded?
+    if (!img) {
+      // If lazy, it might be loading.
+      // If we are here, we really want to draw it.
+      // Maybe we can check if there's a promise?
+      const promise = this.loadingPromises.get(src);
+      if (promise) {
+          promise.then(() => {
+              // If we are still on this frame, draw it
+              if (this.currentFrameIndex === index) {
+                  this.drawFrame(index);
+              }
+          });
+      }
+      return;
+    }
 
     // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

@@ -8,11 +8,13 @@ import { clamp } from '../core/clamp';
 interface UseScrollSequenceParams {
   source: ScrollSequenceProps['source'];
   debugRef?: React.MutableRefObject<HTMLDivElement | null>;
+  memoryStrategy?: 'eager' | 'lazy';
 }
 
 export function useScrollSequence({
   source,
   debugRef,
+  memoryStrategy = 'eager',
 }: UseScrollSequenceParams) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -60,6 +62,7 @@ export function useScrollSequence({
         currentController = new ImageController({
           canvas,
           frames: sequence.frames,
+          strategy: memoryStrategy,
         });
         controllerRef.current = currentController;
 
@@ -108,7 +111,7 @@ export function useScrollSequence({
       controllerRef.current = null;
       resizeObserverRef.current = null;
     };
-  }, [source]);
+  }, [source, memoryStrategy]);
 
   return {
     containerRef,

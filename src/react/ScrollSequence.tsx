@@ -30,6 +30,7 @@ export const ScrollSequence = React.forwardRef<
       scrollLength = '300vh',
       className = '',
       debug = false,
+      memoryStrategy = 'eager',
     } = props;
 
     const debugRef = React.useRef<HTMLDivElement>(null);
@@ -37,6 +38,7 @@ export const ScrollSequence = React.forwardRef<
     const { containerRef, canvasRef, isLoaded } = useScrollSequence({
       source,
       debugRef,
+      memoryStrategy,
     });
 
     const containerStyle: React.CSSProperties = {
