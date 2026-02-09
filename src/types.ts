@@ -24,6 +24,12 @@ export interface ScrollSequenceProps {
    */
   memoryStrategy?: 'eager' | 'lazy';
 
+  /** 
+   * Buffer size for lazy loading (default 10).
+   * Number of frames to keep loaded around the current frame.
+   */
+  lazyBuffer?: number;
+
   /** CSS height for the scroll container. Defines the total scroll distance. */
   scrollLength?: string;
 

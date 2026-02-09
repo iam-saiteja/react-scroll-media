@@ -7,6 +7,7 @@ interface InnerSequenceProps {
     source: ScrollSequenceProps['source'];
     debug: boolean;
     memoryStrategy: ScrollSequenceProps['memoryStrategy'];
+    lazyBuffer?: number;
     accessibilityLabel?: string;
     fallback?: React.ReactNode;
 }
@@ -14,7 +15,8 @@ interface InnerSequenceProps {
 const InnerSequence: React.FC<InnerSequenceProps> = ({ 
     source, 
     debug, 
-    memoryStrategy, 
+    memoryStrategy,
+    lazyBuffer,
     accessibilityLabel = "Scroll sequence",
     fallback 
 }) => {
@@ -22,7 +24,8 @@ const InnerSequence: React.FC<InnerSequenceProps> = ({
     const { canvasRef, isLoaded } = useScrollSequence({
       source,
       debugRef,
-      memoryStrategy
+      memoryStrategy,
+      lazyBuffer
     });
     
     // Fallback logic could be handled here or by parent.
@@ -85,6 +88,7 @@ export const ScrollSequence = React.forwardRef<HTMLDivElement, ScrollSequencePro
       className = '',
       debug = false,
       memoryStrategy = 'eager',
+      lazyBuffer = 10,
       fallback,
       accessibilityLabel,
     } = props;
@@ -97,7 +101,8 @@ export const ScrollSequence = React.forwardRef<HTMLDivElement, ScrollSequencePro
              <InnerSequence 
                 source={source} 
                 debug={debug} 
-                memoryStrategy={memoryStrategy} 
+                memoryStrategy={memoryStrategy}
+                lazyBuffer={lazyBuffer} 
                 fallback={fallback}
                 accessibilityLabel={accessibilityLabel}
              />

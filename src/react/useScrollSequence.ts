@@ -9,6 +9,7 @@ interface UseScrollSequenceParams {
   source: ScrollSequenceProps['source'];
   debugRef?: React.MutableRefObject<HTMLDivElement | null>;
   memoryStrategy?: 'eager' | 'lazy';
+  lazyBuffer?: number;
 }
 
 /**
@@ -19,6 +20,7 @@ export function useScrollSequence({
   source,
   debugRef,
   memoryStrategy = 'eager',
+  lazyBuffer = 10,
 }: UseScrollSequenceParams) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<ImageController | null>(null);
@@ -62,6 +64,7 @@ export function useScrollSequence({
           canvas,
           frames: sequence.frames,
           strategy: memoryStrategy,
+          bufferSize: lazyBuffer
         });
         controllerRef.current = currentController;
 
@@ -96,7 +99,7 @@ export function useScrollSequence({
       controllerRef.current = null;
       if (unsubscribeTimeline) unsubscribeTimeline();
     };
-  }, [source, memoryStrategy, subscribe]); // Re-run if source or timeline changes
+  }, [source, memoryStrategy, lazyBuffer, subscribe]); // Re-run if source or timeline changes
 
   return {
     canvasRef,

@@ -13,6 +13,9 @@ export interface ImageControllerConfig {
 
   /** Memory management strategy */
   strategy?: 'eager' | 'lazy';
+
+  /** Lazy load buffer size (default 10) */
+  bufferSize?: number;
 }
 
 export class ImageController {
@@ -23,6 +26,7 @@ export class ImageController {
   private loadingPromises = new Map<string, Promise<HTMLImageElement>>();
   private currentFrameIndex = -1;
   private strategy: 'eager' | 'lazy';
+  private bufferSize: number;
 
   /**
    * Create a new ImageController instance.
@@ -34,6 +38,7 @@ export class ImageController {
     this.canvas = config.canvas;
     this.frames = config.frames;
     this.strategy = config.strategy || 'eager';
+    this.bufferSize = config.bufferSize || 10;
 
     const ctx = this.canvas.getContext('2d');
     if (!ctx) {
@@ -58,10 +63,10 @@ export class ImageController {
 
   /**
    * Ensure frames around the current index are loaded (Lazy Mode)
-   * Keeps ±3 frames, unloads others.
+   * Keeps ±bufferSize frames, unloads others.
    */
   private ensureFrameWindow(currentIndex: number): void {
-    const radius = 3;
+    const radius = this.bufferSize;
     const start = Math.max(0, currentIndex - radius);
     const end = Math.min(this.frames.length - 1, currentIndex + radius);
     
