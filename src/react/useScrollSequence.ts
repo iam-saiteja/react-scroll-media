@@ -58,8 +58,10 @@ export function useScrollSequence({
         }
 
         // 2. Setup Dimensions (Initial)
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        if (typeof window !== 'undefined') {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
 
         // 3. Initialize Controller
         currentController = new ImageController({

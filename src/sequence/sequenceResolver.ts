@@ -109,7 +109,7 @@ async function processManifestMode(url: string): Promise<ResolvedSequence> {
     } catch (err) {
       // Remove from cache on error so retry is possible
       manifestCache.delete(url);
-      return { frames: [], frameCount: 0 };
+      throw err;
     }
   })();
 

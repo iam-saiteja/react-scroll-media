@@ -183,12 +183,11 @@ Loading state component.
 
 `accessibilityLabel`
 
-`  accessibilityLabel?: string;
-  // Example: "360 degree view of the product"
+`string`
 
 `"Scroll sequence"`
 
-ARIA label for the canvas.
+ARIA label for the canvas. Example: `"360 degree view of the product"`.
 
 `debug`
 
@@ -307,8 +306,21 @@ Network errors are handled gracefully. You can provide a fallback UI that displa
 For robust production apps, wrap `ScrollSequence` in an Error Boundary to catch unexpected crashes:
 
 ```tsx
- class ErrorBoundary extends React.Component {   // ... implementation }
- <ErrorBoundary fallback={<div>Something went wrong</div>}>   <ScrollSequence source={...} /> </ErrorBoundary>
+```tsx
+class ErrorBoundary extends React.Component<{ fallback: React.ReactNode, children: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+// Usage
+<ErrorBoundary fallback={<div>Something went wrong</div>}>
+  <ScrollSequence source={...} /> 
+</ErrorBoundary>
+```
 ```
 
 ### Multi-Instance & Nested Scroll
