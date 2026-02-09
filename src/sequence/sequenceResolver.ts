@@ -31,7 +31,6 @@ export async function resolveSequence(source: ScrollSequenceProps['source']): Pr
       return processManifestMode(source.url);
       
     default:
-      console.error("ScrollSequence: Invalid source type provided.");
       return { frames: [], frameCount: 0 };
   }
 }
@@ -45,22 +44,8 @@ function processManualFrames(frames: string[]): ResolvedSequence {
   const sorted = [...frames].sort((a, b) => {
     const numA = extractNumber(a);
     const numB = extractNumber(b);
-    
-    // If both have no numbers (0), preserve order (return 0)
-    // If one has no number, push it to end? Or keep it? Requirement says "Keep original order" if no numeric index found.
-    // If extracts 0 (meaning no number found), treating as 0 might reorder.
-    // Let's check extraction result.
-    // Actually extractNumber returns 0 if null.
-    // If we want to preserve order for non-numeric, we should perhaps check if NAN.
-    // But extractNumber uses 0.
-    
     return numA - numB;
   });
-
-  // DEV Warning: Check for gaps or missing frames
-  if (process.env.NODE_ENV === 'development') {
-    validateSequence(sorted);
-  }
 
   return {
     frames: sorted,
@@ -82,13 +67,6 @@ function processPatternMode(pattern: string, start: number, end: number, pad?: n
     frames.push(pattern.replace('{index}', indexStr));
   }
 
-  // DEV Warning: Validate generated sequence (mostly for duplicate checks if logic somehow fails, or pattern is bad)
-  if (process.env.NODE_ENV === 'development') {
-    if (frames.length === 0) {
-      console.warn("ScrollSequence: Pattern generation resulted in 0 frames.");
-    }
-  }
-
   return {
     frames,
     frameCount: frames.length
@@ -100,9 +78,6 @@ function processPatternMode(pattern: string, start: number, end: number, pad?: n
  */
 const manifestCache = new Map<string, Promise<ResolvedSequence>>();
 
-/**
- * Mode C: Fetch and process manifest
- */
 async function processManifestMode(url: string): Promise<ResolvedSequence> {
   if (manifestCache.has(url)) {
     return manifestCache.get(url)!;
@@ -129,11 +104,9 @@ async function processManifestMode(url: string): Promise<ResolvedSequence> {
         return processPatternMode(data.pattern, start, data.end, pad);
       }
   
-      console.warn("ScrollSequence: Invalid manifest format. Missing 'frames' or 'pattern' config.");
       return { frames: [], frameCount: 0 };
   
     } catch (err) {
-      console.error("ScrollSequence: Error loading manifest:", err);
       // Remove from cache on error so retry is possible
       manifestCache.delete(url);
       return { frames: [], frameCount: 0 };
@@ -153,47 +126,5 @@ async function processManifestMode(url: string): Promise<ResolvedSequence> {
 function extractNumber(filename: string): number {
   const match = filename.match(/\d+/);
   return match ? parseInt(match[0], 10) : -1;
-}
-
-/**
- * Validate sequence for common issues (gaps, duplicates, missing indices)
- * Only runs in development.
- */
-function validateSequence(frames: string[]) {
-  if (frames.length === 0) return;
-
-  const numbers = frames.map(extractNumber);
-  
-  // 1. Check for Frames with No Numbers
-  // If extractNumber returns -1, it means no number was found.
-  if (numbers.some(n => n === -1)) {
-    console.warn("ScrollSequence: Some frames do not contain numeric indices. Sorting may be unexpected.");
-  }
-  
-  // Filter out non-numeric for sequence checks
-  const validNumbers = numbers.filter(n => n !== -1);
-  if (validNumbers.length === 0) return;
-
-  // 2. Check for duplicates
-  const unique = new Set(validNumbers);
-  if (unique.size !== validNumbers.length) {
-    console.warn("ScrollSequence: Duplicate frame indices found. Frames will be rendered in sorted order.");
-  }
-
-  // 3. Check for Gaps
-  // We expect sorted numbers.
-  // Gaps exist if validNumbers[i+1] !== validNumbers[i] + 1
-  let hasGaps = false;
-  for (let i = 0; i < validNumbers.length - 1; i++) {
-    // Skip checking if duplicates (same number) as that's not a gap, it's a duplicate
-    if (validNumbers[i+1] > validNumbers[i] + 1) {
-      hasGaps = true;
-      break;
-    }
-  }
-
-  if (hasGaps) {
-    console.warn("ScrollSequence: Detected non-sequential frame indices: gaps exist.");
-  }
 }
 

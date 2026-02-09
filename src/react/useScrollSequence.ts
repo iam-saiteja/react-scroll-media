@@ -49,7 +49,6 @@ export function useScrollSequence({
         if (!active) return;
 
         if (sequence.frames.length === 0) {
-          console.warn("ScrollSequence: No frames resolved.");
           return;
         }
 
@@ -85,7 +84,6 @@ export function useScrollSequence({
 
       } catch (err) {
         if (active) {
-          console.error("ScrollSequence init failed:", err);
           setError(err instanceof Error ? err : new Error('Unknown initialization error'));
         }
       }

@@ -115,7 +115,7 @@ export class ImageController {
     try {
       await this.loadingPromises.get(src);
     } catch (err) {
-      console.error(`Failed to preload frame at index ${index}: ${src}`, err);
+      // Failed to preload frame
     }
   }
 
@@ -138,9 +138,8 @@ export class ImageController {
             this.imageCache.set(src, img);
             resolve(img);
           })
-          .catch((err) => {
+          .catch(() => {
              // Decode failed (rare), but load succeeded. Fallback to just resolving.
-             console.warn(`ImageController: Decode failed for ${src}`, err);
              this.imageCache.set(src, img);
              resolve(img);
           });
