@@ -25,6 +25,7 @@
 
 <div align="center">
   <img src="https://github.com/iam-saiteja/react-scroll-media/blob/master/demo.gif?raw=true" alt="React Scroll Media Demo" width="600" />
+  <p><em><strong>Above:</strong> A 60fps scroll-driven sequence. The animation frame is tied 1:1 to the scroll position, allowing for instant scrubbing and pausing at any angle.</em></p>
 </div>
 
 <br />
@@ -545,6 +546,13 @@ Unlike libraries that use `position: fixed` or JS-based scroll locking (which br
 
 <br />
 
+<div align="center">
+  <img src="https://github.com/iam-saiteja/react-scroll-media/blob/master/demo-213.gif?raw=true" alt="React Scroll Media Technical Demo" width="600" />
+  <p><em><strong>Technical Demo:</strong> This visualization shows the direct correlation between the scrollbar position and the rendered frame. The component calculates the exact frame index based on the percentage of the container scrolled, ensuring perfect synchronization without "scroll jacking".</em></p>
+</div>
+
+<br />
+
 ### 🔧 Technical Breakdown
 
 1. **Container (`relative`)** — This element has the height you specify (e.g., `300vh`). It occupies space in the document flow.
@@ -559,7 +567,16 @@ Unlike libraries that use `position: fixed` or JS-based scroll locking (which br
 progress = -containerRect.top / (containerHeight - viewportHeight)
 ```
 
-This gives a precise **0.0 to 1.0** value tied to the pixel position of the scrollbar.
+This gives a precise **0.0 to 1.0** value tied to the pixel position of the scrollbar. This value is then mapped to the corresponding frame index:
+
+```ts
+frameIndex = Math.floor(progress * (totalFrames - 1))
+```
+
+This approach ensures:
+*   **Zero Jitter**: The canvas position is handled by the browser's compositor thread (CSS Sticky).
+*   **Native Feel**: Momentum scrolling works perfectly on touchpads and mobile.
+*   **Exact Sync**: The frame updates are synchronized with the scroll position in a `requestAnimationFrame` loop.
 
 <br />
 
