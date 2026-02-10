@@ -23,6 +23,12 @@
 
 <br />
 
+<div align="center">
+  <img src="https://github.com/iam-saiteja/react-scroll-media/blob/main/demo.gif?raw=true" alt="React Scroll Media Demo" width="600" />
+</div>
+
+<br />
+
 ## ✨ Features
 
 ### 🚀 **Native Performance**
