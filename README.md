@@ -43,7 +43,7 @@
 - **Manifest** — Load sequences from a JSON manifest
 
 ### 🧠 **Smart Memory Management**
-- **Lazy Mode** — Keeps only ±3 frames in memory for huge sequences (800+ frames)
+- **Lazy Mode** — Keeps only ±10 frames (configurable) in memory for huge sequences (800+ frames)
 - **Eager Mode** — Preloads everything for maximum smoothness on smaller sequences
 - **Decoding** — Uses `img.decode()` to prevent main-thread jank during painting
 
@@ -324,10 +324,10 @@ const MyComponent = () => {
 
 | Metric | Size |
 |--------|------|
-| **Minified** | ~22.0 kB |
-| **Gzipped** | ~6.08 kB |
+| **Minified** | ~23.72 kB |
+| **Gzipped** | ~7.11 kB |
 
-✨ **Zero dependencies** — Uses native Canvas API, no heavyweight libraries.
+✨ **Zero dependencies**. Uses native Canvas API, no heavyweight libraries.
 
 <br />
 
