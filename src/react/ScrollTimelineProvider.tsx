@@ -4,12 +4,15 @@ import { ScrollTimelineContext } from './scrollTimelineContext';
 
 export interface ScrollTimelineProviderProps {
   children: React.ReactNode;
-  
+
   /** CSS height for the scroll container (e.g., "300vh"). */
   scrollLength?: string;
-  
+
+
   className?: string;
   style?: React.CSSProperties;
+  /** Optional ref for the container element. */
+  containerRef?: React.RefObject<HTMLDivElement>;
 }
 
 export function ScrollTimelineProvider({
@@ -17,8 +20,10 @@ export function ScrollTimelineProvider({
   scrollLength = '300vh',
   className = '',
   style = {},
+  containerRef: externalRef,
 }: ScrollTimelineProviderProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const internalRef = useRef<HTMLDivElement>(null);
+  const containerRef = externalRef || internalRef;
   const [timeline, setTimeline] = useState<ScrollTimeline | null>(null);
 
   // Use layout effect to ensure timeline exists before children effects run
@@ -31,10 +36,10 @@ export function ScrollTimelineProvider({
 
     // Future-proof: factory could be passed via props
     const instance = new ScrollTimeline(containerRef.current);
-    
+
     // We do NOT call start() anymore, it starts on subscription
     // instance.start(); 
-    
+
     setTimeline(instance);
 
     return () => {
@@ -64,9 +69,9 @@ export function ScrollTimelineProvider({
 
   return (
     <ScrollTimelineContext.Provider value={contextValue}>
-      <div 
-        ref={containerRef} 
-        className={className} 
+      <div
+        ref={containerRef}
+        className={className}
         style={containerStyle}
       >
         <div style={stickyWrapperStyle}>

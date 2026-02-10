@@ -42,6 +42,12 @@ export interface ScrollSequenceProps {
   /** Component to render while the sequence is loading. */
   fallback?: React.ReactNode;
 
+  /**
+   * Object-fit property for the canvas. 
+   * Defaults to 'cover'.
+   */
+  fit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+
   /** Accessibility label for the canvas (role="img"). Defaults to "Scroll sequence". */
   accessibilityLabel?: string;
 
