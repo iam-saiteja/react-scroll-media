@@ -11,7 +11,7 @@
 
 *Zero scroll-jacking • Pure sticky positioning • 60fps performance*
 
-[Installation](#-installation) • [Usage](#-usage) • [API](#%EF%B8%8F-configuration) • [Examples](#-usage)
+[**🌐 Live Demo**](https://react-scroll-media.pages.dev/) • [Installation](#-installation) • [Usage](#-usage) • [API](#%EF%B8%8F-configuration) • [Examples](#-usage)
 
 </div>
 
