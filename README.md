@@ -6,7 +6,7 @@
 
 [![npm version](https://img.shields.io/npm/v/react-scroll-media.svg)](https://www.npmjs.com/package/react-scroll-media)
 [![npm downloads](https://img.shields.io/npm/dm/react-scroll-media.svg)](https://www.npmjs.com/package/react-scroll-media)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/react-scroll-media)](https://bundlephobia.com/package/react-scroll-media)
+[![package size](https://packagephobia.com/badge?p=react-scroll-media)](https://packagephobia.com/result?p=react-scroll-media)
 [![license](https://img.shields.io/npm/l/react-scroll-media.svg)](https://github.com/yourusername/react-scroll-media/blob/main/LICENSE)
 
 *Zero scroll-jacking • Pure sticky positioning • 60fps performance*
