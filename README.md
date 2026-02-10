@@ -249,6 +249,22 @@ const MyComponent = () => {
 
 ---
 
+## 🎨 Image Fit Modes
+
+The `fit` prop controls how images scale within the viewport, using the standard CSS `object-fit` property.
+
+| Mode | Description | Best Use Case |
+|------|-------------|---------------|
+| `cover` (Default) | **Fills the screen**, cropping edges if aspect ratios differ. | Full-screen background sequences. |
+| `contain` | **Shows the full image**. Letterboxing (bars) may appear. | Product showcases where no part of the image should be cut off. |
+| `fill` | **Stretches** to fill dimensions. Ignores aspect ratio. | Abstract patterns where distortion is acceptable. |
+| `none` | **Original size**. No scaling. | Pixel-perfect displays when the wrapper matches image size. |
+| `scale-down` | **Smallest of `none` or `contain`**. | Responsive layouts where images shouldn't upscale beyond native resolution. |
+
+<br />
+
+---
+
 ## ⚙️ Configuration
 
 ### `ScrollSequence` Props
@@ -298,6 +314,12 @@ const MyComponent = () => {
 <td><code>string</code></td>
 <td><code>"Scroll sequence"</code></td>
 <td>ARIA label for the canvas. Example: <code>"360 degree view of the product"</code>.</td>
+</tr>
+<tr>
+<td><code>fit</code></td>
+<td><code>"cover" | "contain" | "fill" | "none" | "scale-down"</code></td>
+<td><code>"cover"</code></td>
+<td>Determines how the image is resized to fit its container.</td>
 </tr>
 <tr>
 <td><code>debug</code></td>
