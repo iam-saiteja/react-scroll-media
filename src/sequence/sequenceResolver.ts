@@ -193,7 +193,8 @@ const manifestCache = new Map<string, Promise<ResolvedSequence>>();
 const MANIFEST_FETCH_TIMEOUT_MS = 10000; // 10 seconds
 const MANIFEST_MAX_SIZE_BYTES = 1_048_576; // 1MB response size limit
 const MANIFEST_CACHE_MAX_ENTRIES = 50; // Prevent unbounded cache growth
-const USER_AGENT = 'react-scroll-media/1.0.5';
+declare const __PKG_VERSION__: string;
+const USER_AGENT = `react-scroll-media/${__PKG_VERSION__}`;
 
 async function processManifestMode(url: string): Promise<ResolvedSequence> {
   if (manifestCache.has(url)) {
