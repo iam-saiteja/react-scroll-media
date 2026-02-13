@@ -1,6 +1,11 @@
 <div align="center">
 
-# 🎬 React Scroll Media
+# React Scroll Media
+
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/iam-saiteja/react-scroll-media/master/icon.png" alt="React Scroll Media Logo" width="120" />
+</p>
 
 **Production-ready, cinematic scroll sequences for React.**
 
