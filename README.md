@@ -7,6 +7,7 @@
 [![npm version](https://img.shields.io/npm/v/react-scroll-media.svg)](https://www.npmjs.com/package/react-scroll-media)
 [![npm downloads](https://img.shields.io/npm/dm/react-scroll-media.svg)](https://www.npmjs.com/package/react-scroll-media)
 [![package size](https://packagephobia.com/badge?p=react-scroll-media)](https://packagephobia.com/result?p=react-scroll-media)
+[![security audit](https://img.shields.io/badge/security-Socket.dev-blue.svg)](https://socket.dev/npm/package/react-scroll-media)
 [![license](https://img.shields.io/npm/l/react-scroll-media.svg)](https://github.com/yourusername/react-scroll-media/blob/main/LICENSE)
 
 *Zero scroll-jacking • Pure sticky positioning • 60fps performance*
@@ -636,6 +637,41 @@ Frame: 45 / 100
 This overlay is updated directly via DOM manipulation (bypassing React renders) for **zero overhead**.
 
 <br />
+
+---
+
+## 🔒 Security
+
+`react-scroll-media` prioritizes security and follows best practices for client-side rendering libraries.
+
+### Network Access
+
+When using **Manifest Mode** (`source.type === 'manifest'`), the library makes network requests to fetch your manifest configuration. For security recommendations and best practices, see our [SECURITY.md](./SECURITY.md) document.
+
+**Key Points:**
+- ✅ Network access is **optional** (only when using manifest mode)
+- ✅ No external dependencies or third-party integrations
+- ✅ All processing happens client-side
+- ✅ No data collection or telemetry
+
+**Built-in Security Hardening (v1.0.5+):**
+- 🔐 **HTTPS enforcement** — HTTP manifest URLs are rejected
+- 🔐 **Credential isolation** — `credentials: 'omit'` prevents cookie/auth leakage
+- 🔐 **Referrer protection** — `referrerPolicy: 'no-referrer'` prevents page URL leakage
+- 🔐 **Response size limit** — 1MB max to prevent memory exhaustion
+- 🔐 **Frame URL whitelist** — Only `http:`/`https:` and relative paths allowed; `//evil.com` rejected
+- 🔐 **Frame count cap** — Default 2000, ceiling 8000, configurable via `REACT_SCROLL_MEDIA_MAX_FRAMES`
+- 🔐 **Cache size limit** — 50 entry cap with automatic eviction
+- 🔐 **Timeout protection** — 10-second abort on slow responses
+- 🔐 **Response validation** — Content-type + structure checks
+
+**Quick Security Tips:**
+- Use HTTPS for all manifest URLs
+- Only load manifests from trusted sources
+- Use Manual or Pattern modes for sensitive environments
+- Implement Content Security Policy headers
+
+👉 **[Full Security Policy →](./SECURITY.md)**
 
 ---
 

@@ -23,7 +23,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "SECURITY.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=14"
